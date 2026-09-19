@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101312">
+<title>IA Coach — um treinador que planeja com você</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👊</text></svg>">
+<style>
+:root{--bg:#101312;--bg2:#161b19;--bg3:#1d2421;--tx:#edf2ee;--muted:#93a39a;--brand:#ffb03d;--hot:#ff8a3d;--ok:#3ecf8e;--bad:#f0604d;--line:#263029;--bub:#203327;--bubIA:#1d2421}
+[data-tema="claro"]{--bg:#f4f6f4;--bg2:#ffffff;--bg3:#e9ede9;--tx:#1a201c;--muted:#5d6b62;--line:#d8ded9;--bub:#dcf5e7;--bubIA:#e9ede9}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--tx);font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;font-size:15px;line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased}
+button{font:inherit;cursor:pointer;border:0;color:inherit;background:none}
+input,textarea,select{font:inherit}
+.top{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--bg2);position:sticky;top:0;z-index:10}
+.logo{font-weight:800;letter-spacing:-.02em;font-size:15.5px}
+.logo .fist{margin-right:6px}
+.top .sp{flex:1}
+.btn{border-radius:12px;padding:10px 16px;font-weight:700;font-size:14px;transition:filter .15s,transform .1s}
+.btn:active{transform:scale(.97)}
+.btn.p{background:linear-gradient(135deg,var(--brand),var(--hot));color:#181005}
+.btn.g{background:var(--bg3);border:1px solid var(--line)}
+.btn.d{background:var(--bg3);border:1px solid var(--line);color:var(--bad)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+main{max-width:680px;margin:0 auto;padding:22px 16px 90px}
+h1{font-size:23px;letter-spacing:-.02em;margin-bottom:6px}
+h2{font-size:17px;margin-bottom:8px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:16px}
+.card{background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+.card h3{font-size:15px;margin-bottom:6px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.area{background:var(--bg3);border:1.5px solid var(--line);border-radius:14px;padding:14px 10px;text-align:center;font-weight:700;font-size:13.5px;transition:border-color .15s,transform .1s}
+.area small{display:block;color:var(--muted);font-weight:500;font-size:11.5px;margin-top:2px}
+.area:active{transform:scale(.97)}
+.area.on{border-color:var(--brand);background:linear-gradient(135deg,rgba(255,176,61,.12),rgba(255,138,61,.06))}
+textarea,input[type=text]{width:100%;background:var(--bg3);border:1px solid var(--line);border-radius:12px;color:var(--tx);padding:12px;outline:none;resize:vertical;min-height:74px}
+textarea:focus,input:focus{border-color:var(--brand)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{background:var(--bg3);border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;font-size:13.5px;font-weight:600}
+.chip.on{border-color:var(--brand);color:var(--brand)}
+.passo{color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.08em;margin-bottom:8px}
+.row{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
+.acao{display:flex;gap:10px;align-items:flex-start;background:var(--bg3);border:1px solid var(--line);border-radius:13px;padding:12px;margin-bottom:8px}
+.acao .ck{width:26px;height:26px;min-width:26px;border-radius:9px;border:2px solid var(--muted);display:flex;align-items:center;justify-content:center;font-size:15px;margin-top:2px}
+.acao.done .ck{background:var(--ok);border-color:var(--ok);color:#0c2417}
+.acao.done .tt{text-decoration:line-through;opacity:.6}
+.acao .tt{font-weight:600;font-size:14px}
+.acao .mn{color:var(--muted);font-size:12px}
+.coachfala{background:linear-gradient(135deg,rgba(62,207,142,.12),rgba(255,176,61,.08));border:1px solid var(--line);border-radius:14px;padding:13px 15px;margin-bottom:14px;font-size:14px}
+.coachfala b{color:var(--brand)}
+.semana{display:flex;gap:6px;margin:8px 0 2px}
+.sd{flex:1;text-align:center;background:var(--bg3);border-radius:10px;padding:7px 2px;font-size:11px;color:var(--muted)}
+.sd b{display:block;font-size:13px;color:var(--tx)}
+.sd.hoje{outline:2px solid var(--brand)}
+.sd.fez b{color:var(--ok)}
+.sd.zero{opacity:.45}
+.barra{height:9px;background:var(--bg3);border-radius:99px;overflow:hidden}
+.barra i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--ok));border-radius:99px;transition:width .4s}
+table.pl{width:100%;border-collapse:collapse;font-size:13px}
+table.pl td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+table.pl td:first-child{font-weight:700;white-space:nowrap}
+.kv{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.kv:last-child{border:0}
+.kv b{color:var(--ok)}
+/* chat */
+#chatlog{display:flex;flex-direction:column;gap:10px;padding-bottom:10px}
+.msg{max-width:86%;padding:11px 14px;border-radius:15px;font-size:14px;white-space:pre-wrap;word-wrap:break-word}
+.msg.ia{background:var(--bubIA);border:1px solid var(--line);border-bottom-left-radius:5px;align-self:flex-start}
+.msg.eu{background:var(--bub);border-bottom-right-radius:5px;align-self:flex-end}
+.msg.sys{background:none;color:var(--muted);font-size:12px;align-self:center;text-align:center;max-width:95%}
+#chatbar{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--line);padding:10px 12px;display:flex;gap:8px}
+#chatin{flex:1;min-height:44px;max-height:110px}
+.nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--bg2);border-top:1px solid var(--line);z-index:9;padding-bottom:env(safe-area-inset-bottom)}
+.nav button{flex:1;padding:10px 2px 12px;font-size:11px;color:var(--muted);font-weight:600}
+.nav button .i{display:block;font-size:19px;margin-bottom:1px}
+.nav button.on{color:var(--brand)}
+.toast{position:fixed;left:50%;bottom:74px;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--line);padding:11px 16px;border-radius:12px;font-size:13.5px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:80;max-width:92vw;text-align:center}
+.toast.on{opacity:1}
+.fire{color:var(--brand);font-weight:800}
+@media(max-width:600px){.grid2{grid-template-columns:1fr 1fr}h1{font-size:20px}}
+</style>
+</head>
+<body>
+<header class="top">
+  <span class="logo"><span class="fist">👊</span>IA Coach</span>
+  <span class="sp"></span>
+  <span id="stfire" style="color:var(--brand);font-weight:800;font-size:13.5px"></span>
+</header>
+
+<main id="v-start">
+  <h1>Seu treinador de metas 🥊</h1>
+  <p class="sub">Ele pergunta como é sua vida de verdade, monta um plano que <b>cabe no seu dia</b>, cobra com carinho e ajusta o jogo quando a coisa aperta.</p>
+  <div class="card"><h3>❓ Pergunta antes de prescrever</h3><p class="sub" style="margin:0">Rotina real, o que já tentou, onde dá pra encaixar — igual uma conversa boa de treinador.</p></div>
+  <div class="card"><h3>📝 Plano pequeno e concreto</h3><p class="sub" style="margin:0">Ações de minutos, semana organizada, regras de casa. Começar minúsculo vencer plano gigante.</p></div>
+  <div class="card"><h3>🔥 Cobra, acompanha e adapta</h3><p class="sub" style="margin:0">Check-in diário, ofensiva, balanço semanal honesto — e o plano encolhe ou evolui conforme você.</p></div>
+  <div class="row"><button class="btn p" id="b-comecar">Começar 👊</button></div>
+  <p class="sub" style="margin-top:14px;font-size:12px">Tudo fica no seu navegador. As conversas de IA usam uma fila gratuita — e sem internet o coach continua com o plano e o check-in 💪</p>
+</main>
+
+<main id="v-wizard" hidden>
+  <div class="passo" id="w-passo">PERGUNTA 1 DE 7</div>
+  <div id="w-corpo"></div>
+  <div class="row">
+    <button class="btn g" id="w-voltar">← Voltar</button>
+    <button class="btn p" id="w-avancar">Continuar →</button>
+  </div>
+</main>
+
+<main id="v-hoje" hidden></main>
+<main id="v-plano" hidden></main>
+<main id="v-chat" hidden>
+  <div id="chatlog"></div>
+  <div id="chatbar">
+    <textarea id="chatin" rows="1" placeholder="fala com teu coach…"></textarea>
+    <button class="btn p" id="b-enviar">➤</button>
+  </div>
+</main>
+<main id="v-prog" hidden></main>
+<main id="v-config" hidden>
+  <h2>⚙️ Ajustes</h2>
+  <div class="card">
+    <h3>Como te chamo?</h3>
+    <input type="text" id="cf-apelido" maxlength="30" style="min-height:0;margin-bottom:10px">
+    <h3>Nome do teu coach</h3>
+    <input type="text" id="cf-nome" maxlength="30" style="min-height:0">
+  </div>
+  <div class="card"><h3>🎨 Tema</h3><div class="chips" id="cf-tema"><button class="chip" data-t="escuro">🌙 escuro</button><button class="chip" data-t="claro">☀️ claro</button></div></div>
+  <div class="card"><h3>🚮 Zona de perigo</h3><p class="sub" style="margin-bottom:10px">Apaga meta, plano, check-ins e conversas. Não tem volta.</p><button class="btn d" id="cf-apagar">Apagar tudo</button></div>
+</main>
+
+<nav class="nav" id="nav" hidden>
+  <button data-v="v-hoje"><span class="i">📅</span>Hoje</button>
+  <button data-v="v-plano"><span class="i">🗺️</span>Plano</button>
+  <button data-v="v-chat"><span class="i">💬</span>Coach</button>
+  <button data-v="v-prog"><span class="i">📈</span>Progresso</button>
+  <button data-v="v-config"><span class="i">⚙️</span>Ajustes</button>
+</nav>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+/* ════════ CZ-CORE (puro — testado em node) ════════ */
+const CZ={
+ hojeISO(){const x=new Date();return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')},
+ isoMenos(n){const x=new Date(Date.now()-n*864e5);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')},
+ DIAS:['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],
+ AREAS:[
+  {id:'saude',e:'💪',n:'Saúde & Treinos',d:'peso, força, energia'},
+  {id:'estudos',e:'📚',n:'Estudos',d:'provas, foco, revisão'},
+  {id:'produtividade',e:'⏰',n:'Produtividade',d:'rotina, foco, tarefas'},
+  {id:'projetos',e:'🛠️',n:'Projetos',d:'tirar ideia do papel'},
+  {id:'conteudo',e:'🎬',n:'Criação de conteúdo',d:'vídeo, texto, post'},
+  {id:'pessoal',e:'🌱',n:'Desenvolvimento pessoal',d:'hábitos, humor, sono'}],
+ /* templates — inspirados no ciclo real que funcionou (Treino 5.0 / caminhada intervalada) */
+ TPL:{
+  saude:{foco:['treino','leve','treino','leve','treino','livre','descanso'],
+   acoes:{treino:[{t:'Circuito do quarto (agachamento, flexão, prancha, polichinelo — 3 rodadas)',min:10},{t:'Água: meta da garrafa 💧',min:1}],
+          leve:[{t:'Caminhada leve ou alongamento com música',min:10},{t:'Água: meta da garrafa 💧',min:1}],
+          livre:[{t:'Movimento livre: dança, caminhada, bike — o que der vontade',min:15}],
+          descanso:[{t:'Descanso total de culpa 🛋️ (dormir bem conta!)',min:0}]},
+   regras:['Dor aguda = parar. Desconforto de esforço = normal','Doce liberado sem culpa, no equilíbrio 🍫','Comida de verdade > dieta; assunto de saúde pesado é com profissional'],
+   ex:'quero perder peso / ganhar força / ter mais energia'},
+  estudos:{foco:['foco','foco','foco','revisão','foco','revisão','descanso'],
+   acoes:{foco:[{t:'Bloco de estudo com timer (25 min liga, 5 descansa)',min:25},{t:'Anotar o que travou pra perguntar depois',min:2}],
+          revisão:[{t:'Revisão espaçada: ontem · 7 dias atrás · 30 dias atrás',min:15}],
+          descanso:[{t:'Descanso: nada de culpa, cérebro consolida dormindo 🛋️',min:0}]},
+   regras:['Estudar todo dia 25 min > 4h no sábado','Celular longe durante o bloco (é 25 min, aguenta 😄)','Pergunta boa vale mais que hora morta'],
+   ex:'passar na prova / aprender X / parar de deixar pra depois'},
+  produtividade:{foco:['foco','foco','foco','foco','foco','organizar','descanso'],
+   acoes:{foco:[{t:'Comer o sapo: a tarefa que você mais evita, primeiro 🐸',min:15},{t:'Tirar 3 tarefas da cabeça pro papel',min:3}],
+          organizar:[{t:'Arrumar o quartinho da semana: mesa, mochila, abas abertas',min:10}],
+          descanso:[{t:'Descanso de verdade — ocioso também produz 🛋️',min:0}]},
+   regras:['Tarefa de 2 minutos? Faz agora','Agenda lotada ≠ produtivo; espaçamento é parte do trabalho','Feito > perfeito'],
+   ex:'parar de procrastinar / organizar a rotina / dar conta de tudo'},
+  projetos:{foco:['construir','construir','construir','construir','construir','mostrar','descanso'],
+   acoes:{construir:[{t:'Avançar 1 pedacinho do projeto (a menor parte possível)',min:20},{t:'Anotar o próximo passo pra amanhã',min:2}],
+          mostrar:[{t:'Mostrar pra alguém / testar de verdade',min:10}],
+          descanso:[{t:'Descanso — a cabeça resolve em segundo plano 🛋️',min:0}]},
+   regras:['Projeto vivo = pedacinho todo dia','Publicar feio > polir pra sempre','Trava? Diminui o pedaço, não desiste'],
+   ex:'terminar meu site / lançar meu jogo / finalizar TCC'},
+  conteudo:{foco:['produzir','produzir','captar','produzir','produzir','publicar','descanso'],
+   acoes:{produzir:[{t:'Fazer o próximo pedaço (roteiro, gravação, edição…)',min:20}],
+          captar:[{t:'Anotar 3 ideias do cotidiano (o cotidiano É a pauta)',min:5}],
+          publicar:[{t:'Publicar o que ficou pronto essa semana 🚀',min:10}],
+          descanso:[{t:'Consumir referência de propósito (isso é trabalho também)',min:0}]},
+   regras:['Ritmo vence inspiration','1 conteúdo publicado > 5 na cabeça','Consistência constrói plateia'],
+   ex:'postar todo semana / crescer o canal / vencer a vergonha'},
+  pessoal:{foco:['hábito','hábito','hábito','hábito','hábito','refletir','descanso'],
+   acoes:{hábito:[{t:'O hábito minúsculo do dia (2 min contam e muito)',min:2},{t:'Marcar aqui que fez ✅',min:1}],
+          refletir:[{t:'5 linhas: o que rolou, o que aprendi, o que muda',min:5}],
+          descanso:[{t:'Autocuidado: dormir cedo conta dobro 🛋️',min:0}]},
+   regras:['Nunca duas semanas seguidas no zero','Hábito gruda em gatilho: depois do X, faço Y','Recaída é dado, não derrota'],
+   ex:'ler todo dia / dormir melhor / ficar menos no celular'}},
+ /* monta o plano semanal a partir do template + respostas do wizard */
+ criarPlano(areaId,tempoMin,qndo){
+  const t=CZ.TPL[areaId];if(!t)return null;
+  const dias=CZ.DIAS.map((dn,i)=>{
+   const foco=t.foco[(i+6)%7]; // template começa na SEGUNDA; DIAS começa no domingo
+   let acoes=(t.acoes[foco]||[]).map(a=>({t:a.t,min:a.min}));
+   if(tempoMin&&tempoMin<=10)acoes=acoes.slice(0,1); // tempo curto → só a essência
+   return {dn,foco,acoes};
+  });
+  return {area:areaId,criado:CZ.hojeISO(),versao:1,qndo:qndo||'',dias,regras:t.regras.slice(),ex:t.ex};
+ },
+ todasAcoes(plano){const out=[];plano.dias.forEach(d=>d.acoes.forEach((a,i)=>out.push({dia:d.dn,i,a,foco:d.foco})));return out},
+ acoesDoDia(plano,iso){const js=new Date(iso+'T12:00:00').getDay();return plano.dias[js]},
+ /* log: {iso:{feitas:[bool],nota}} */
+ checkin(plano,log,iso,i,val){
+  const d=CZ.acoesDoDia(plano,iso);if(!d)return log;
+  const l=log[iso]||{feitas:d.acoes.map(()=>false)};
+  if(i>=0&&i<l.feitas.length)l.feitas[i]=!!val;
+  log[iso]=l;return log;
+ },
+ fezAlgo(l){return !!l&&!!l.feitas&&l.feitas.some(Boolean)},
+ streak(log,hoje){ // hoje conta se fez; ontem em branco quebra a corrente
+  let s=CZ.fezAlgo(log[hoje])?1:0;
+  for(let n=1;n<400;n++){
+   if(CZ.fezAlgo(log[CZ.isoMenos(n)]))s++;
+   else break;
+  }
+  return s;
+ },
+ balanco(log,plano,hoje){ // últimos 7 dias completos (exclui hoje)
+  let prev=0,tot=0,zerados=[];
+  for(let n=1;n<=7;n++){
+   const iso=CZ.isoMenos(n);
+   const previstas=CZ.acoesDoDia(plano,iso).acoes.length;
+   const l=log[iso];
+   const f=l?l.feitas.filter(Boolean).length:0;
+   tot+=previstas;prev+=Math.min(f,previstas);
+   if(!CZ.fezAlgo(l)&&previstas>0)zerados.push(iso);
+  }
+  const pct=tot?Math.round(prev/tot*100):0;
+  let veredito,ajuste;
+  if(pct<40){veredito='o plano tá pesado pra sua realidade — nada de culpa, é SINAL, não fracasso';ajuste='encolher'}
+  else if(pct<75){veredito='tá rodando, com engasgos — dá pra estabilizar';ajuste='manter'}
+  else{veredito='isso aí é constância de gente grande 👏';ajuste='evoluir'}
+  return {pct,zerados,prev,tot,veredito,ajuste};
+ },
+ ajustarPlano(plano,tipo){
+  const p=JSON.parse(JSON.stringify(plano));
+  if(tipo==='encolher'){p.dias.forEach(d=>{if(d.acoes.length>1)d.acoes=d.acoes.slice(0,1)});p.versao=(p.versao||1)+1;p.nota='Versão encolhida: menos ações por dia — primeiro vira rotina, depois cresce'}
+  else if(tipo==='evoluir'){p.dias.forEach(d=>{if(d.foco==='treino'||d.foco==='construir'||d.foco==='produzir'||d.foco==='foco')d.acoes.push({t:(d.foco==='treino'?'1 rodada extra (só se tiver super bem)':'5 minutinhos extras no bloco'),min:5})});p.versao=(p.versao||1)+1;p.nota='Versão evoluída: um pouquinho mais de carga — do jeito que não quebra'}
+  return p;
+ },
+ BLOQUEIOS:['sem tempo','cansado/a','não senti vontade','esqueci','o plano tá grande','outra…'],
+ SUGESTAO:{'sem tempo':'amanhã a ação vale com METADE do tempo — 5 minutinhos quebra o zero, e zero quebrado muda o jogo','cansado/a':'dia leve, então: faz só a menor ação, devagar. Descanso planejado não é derrota','não senti vontade':'regra dos 2 minutos: começa só pra experimentar. Vontade vem DEPOIS de começar, quase sempre','esqueci':'vamos amarrar num gatilho: logo DEPOIS de [coisa que você já faz todo dia], você faz a ação. Me diz o gatilho','o plano tá grande':'encolhi o plano pra você no botão aí de cima — primeiro vira rotina, depois cresce 🌱','outra…':'me conta no 💬 o que travou — adaptar o plano é parte do processo, não fraqueza'},
+ msgCheckin(i,total,area){const M=['ISSA! ✅ cada marcação aqui é prova, não promessa','bom demais. O segredo não é motivação, é MARCAR e continuar','viu como cabe? O plano que cabe é o que funciona','“treinar é destruir, descansar é construir” — e mostrar todo dia é construir constância','Você não tá fazendo “só um pouquinho” — tá fazendo o que 90% não faz: repetir 👏'];return M[i%M.length]},
+ msgFalta(n,apelido){if(n===1)return 'Oi, '+apelido+'! Ontem escapou — de boa, um dia não apaga nada. O que atrapalhou?';if(n===2)return '✋ '+apelido+', dois dias no zero… tô aqui, não tô bravo. O que tá travando?';return 'Ei, '+apelido+', já são '+n+' dias parados. Sem culpa e sem drama: respira, faz a menor ação HOJE e a gente recomeça. O que atrapalhou?'},
+ msgBomDia(apelido,st){return st>1?('Bom dia, '+apelido+'! 🔥 ofensiva de '+st+' dia'+(st>1?'s':'')+' — bora manter a corrente'):'Bom dia, '+apelido+'! bora pro dia? o primeiro passo de hoje tá logo aí 👇'},
+ /* wizard: 7 perguntas do DNA Coach Z */
+ WIZ:[
+  {k:'area',q:'Onde tua vida pesa mais agora?',d:'escolhe uma pra começar — o coach adapta o resto',tipo:'area'},
+  {k:'objetivo',q:'O que você quer alcançar?',d:'em tuas palavras, sem formalidade',tipo:'texto',ph:{saude:'quero perder peso / ganhar força / ter mais energia…',estudos:'passar na prova / aprender X / parar de deixar pra depois…',produtividade:'parar de procrastinar / organizar a rotina…',projetos:'terminar meu site / lançar meu projeto…',conteudo:'postar toda semana / crescer o canal…',pessoal:'ler todo dia / dormir melhor / menos celular…'}},
+  {k:'rotina',q:'Como é tua rotina?',d:'que horas os dias ficam cheios? onde sobra respiro? (escola/trabalho, casa, fim de semana…)',tipo:'texto',ph:'tenho aula de manhã, chego meio-dia, à tarde fico em casa…'},
+  {k:'tentou',q:'Já tentou algo antes? O que atrapalhou?',d:'o passado é dado, não vergonha 😄 (pode pular)',tipo:'texto',ph:'comecei uma vez e parei depois de uma semana porque…',opcional:true},
+  {k:'tempo',q:'Quanto tempo por dia você assume?',d:'seja HONESTO aqui — plano que cabe é plano que rola',tipo:'chip',op:['5 min','10 min','15-20 min','30+ min']},
+  {k:'qndo',q:'Que horário te encaixa melhor?',d:'o plano vai amarrar nesse horário (gatilho!)',tipo:'chip',op:['de manhã','à tarde','à noite','varia']},
+  {k:'nomes',q:'Última coisa!',d:'como te chamo e como você quer chamar seu coach?',tipo:'nomes'}],
+ wizResp(area){const r={};CZ.WIZ.forEach(w=>{if(w.tipo==='chip')r[w.k]='';else if(w.tipo==='nomes')r[w.k]={apelido:'',coach:''};else r[w.k]=w.tipo==='area'?area:''});return r},
+ wizCompleto(r){return !!r.area&&!!(r.objetivo||'').trim()&&!!(r.tempo||'').trim()&&!!((r.nomes&&r.nomes.apelido)||'').trim()}
+};
+/*CZ-END*/
+
+/* ═══ IA (mesma fila gratuita do mentalista, com fallback honesto) ═══ */
+const PROXY='https://soulchat-proxy.vercel.app/api/proxy';
+const POLL='https://text.pollinations.ai/openai';
+const FILA_OR=['google/gemma-4-26b-a4b-it:free','inclusionai/ling-3.0-flash-vl:free','nex-agi/nex-n2.5-mini:free','nvidia/nemotron-3-super-120b-a12b:free'];
+const FILA_NV=['openai/gpt-oss-20b','nvidia/nemotron-3-super-120b-a12b'];
+let FAV={or:'',nv:''};
+function filas(){const or=[],nv=[];if(FAV.or)or.push(FAV.or);FILA_OR.forEach(m=>or.push(m));if(FAV.nv)nv.push(FAV.nv);FILA_NV.forEach(m=>nv.push(m));return{or,nv};}
+const LIM_DIA=120;
+function contaUso(){const hoje=CZ.hojeISO();const d=ST.getJ('coach_uso')||{};return d.dia===hoje?(d.n||0):0}
+function usaUso(){const hoje=CZ.hojeISO();const d=ST.getJ('coach_uso')||{};const n=d.dia===hoje?(d.n||0)+1:1;ST.setJ('coach_uso',{dia:hoje,n});}
+async function callAI(msgs){
+  if(contaUso()>=LIM_DIA) throw new Error('Limite diário de IA atingido ('+LIM_DIA+' mensagens/dia) — amanhã tem mais! 💙');
+  const erros=[];const{or,nv}=filas();
+  const tent=[...or.map(m=>({nome:'proxy·openrouter',url:PROXY,provider:'openrouter',model:m})),
+              ...nv.map(m=>({nome:'proxy·nvidia',url:PROXY,provider:'nvidia',model:m})),
+              {nome:'pollinations',url:POLL,body:{}}];
+  for(const t of tent){
+    try{
+      const body=t.provider?{provider:t.provider,model:t.model,messages:msgs}:{model:t.model||undefined,messages:msgs};
+      const r=await fetch(t.url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(90000)});
+      if(!r.ok){erros.push(t.nome+' '+r.status);continue;}
+      const d=await r.json();
+      const txt=d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content;
+      if(txt&&/reached its budget|rate.?limit|quota exceeded|insufficient/i.test(txt)&&txt.length<500){erros.push(t.nome+' limite');continue;}
+      if(txt){if(/openrouter/.test(t.nome))FAV.or=t.model;else if(/nvidia/.test(t.nome))FAV.nv=t.model;usaUso();return txt;}
+      erros.push(t.nome+' vazia');
+    }catch(e){erros.push(t.nome+' falhou');}
+  }
+  throw new Error('IA lotada agora ('+erros.slice(0,3).join(' · ')+') — o coach já te deu o essencial offline; volta mais tarde 💙');
+}
+/* DNA do coach — destilado da conversa real que funcionou (Coach Z & Sr. Luke) */
+function dnaSistema(){
+ const p=ST.getJ('coach_perfil')||{},pl=ST.getJ('coach_plano'),ap=(p.nomes&&p.nomes.apelido)||'champ',nc=(p.nomes&&p.nomes.coach)||'Coach';
+ let ctx='\n\nCONTEXTO DO USUÁRIO: apelido: '+ap+'.'+
+  (p.area?('\nárea: '+(CZ.AREAS.find(a=>a.id===p.area)||{}).n):'')+
+  (p.objetivo?('\nobjetivo dele: '+p.objetivo):'')+
+  (p.rotina?('\nrotina: '+p.rotina):'')+
+  (p.tentou?('\njá tentou antes: '+p.tentou):'')+
+  (p.tempo?('\ntempo que assumiu por dia: '+p.tempo):'')+(p.qndo?('\nmelhor horário: '+p.qndo):'');
+ if(pl){ctx+='\nplano atual (v'+pl.versao+'): '+pl.dias.map(d=>CZ.DIAS[new Date('2000-01-0'+(CZ.DIAS.indexOf(d.dn)+1)+'T12:00:00').getDay()]||d.dn).length+' dias → '+pl.dias.map(d=>d.dn+': '+d.foco).join(' · ');}
+ const st=CZ.streak(ST.getJ('coach_log')||{},CZ.hojeISO());
+ ctx+='\nofensiva atual: '+st+' dia(s).';
+ return 'Você é o '+nc+', treinador pessoal dentro do app IA Coach. O usuário se chama '+ap+'.\n'+
+ 'JEITÃO: treinador que APOIA — quase um amigo mais experiente: apelido carinhoso, emojis na medida (1-3 por msg), comemora vitória pequena, ZERO culpa, humor leve, português BR informal ("bora", "issa").\n'+
+ 'MÉTODO (é assim que você funciona): 1) pergunta ANTES de prescrever — rotina real, horários cheios, onde sobra respiro; 2) plano que CAIBA na vida: ações pequenas, concretas, de minutos; 3) amarra ação em gatilho (depois de X, faço Y); 4) alterna esforço/descanso (descanso é parte do treino); 5) balanço periódico honesto; 6) quando a realidade diverge do plano, ADAPTA sem drama ("pode deixar assim mesmo") — nunca recomeça do zero; 7) oferece caminhos A/B quando der.\n'+
+ 'CIÊNCIA: honesta e simples. Pode citar: teste da fala pra intensidade (dá pra falar, não cantar), sobrecarga progressiva, sono e proteína pra recuperação, água, hábito minúsculo > plano gigante, pomodoro, revisão espaçada. NUNCA invente número/estudo/fato. Se não souber, diz que não sabe.\n'+
+ 'LIMITES (IMPORTANTES): usuário pode ser menor de idade — em saúde NUNCA prescreva dieta restritiva, déficit agressivo, suplemento ou meta de peso agressiva; trabalhe equilíbrio, comida de verdade, sono, movimento e autoestima. Questão de saúde séria → encoraje procurar médico/nutricionista/adulto de confiança. Sinal de sofrimento real (tristeza profunda, automutilação, desesperança) → acolha com carinho e sugira falar com alguém de confiança (CVV 188 se grave). Nada de conteúdo 18+.\n'+
+ 'FORMATO: mensagens curtas (2-6 frases), uma pergunta por vez, sem parede de texto. Pode propor ajuste de plano em texto; o botão de aplicar fica por conta do app.'+ctx;
+}
+
+/* ═══ app (DOM) ═══ */
+const $=s=>document.querySelector(s);
+const ST={getJ(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},setJ(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),3400)}
+let V='v-start',W={etapa:0,resp:null},ARM=false;
+function ver(id){
+ V=id;['v-start','v-wizard','v-hoje','v-plano','v-chat','v-prog','v-config'].forEach(x=>$('#'+x).hidden=x!==id);
+ $('#nav').hidden=(id==='v-start'||id==='v-wizard');
+ document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===id));
+ if(id==='v-hoje')renderHoje();else if(id==='v-plano')renderPlano();else if(id==='v-prog')renderProg();else if(id==='v-config')renderCfg();else if(id==='v-chat')renderChat();
+ fire();
+}
+function fire(){const st=CZ.streak(ST.getJ('coach_log')||{},CZ.hojeISO());$('#stfire').textContent=st>0?('🔥 '+st):''}
+function temPerfil(){return !!ST.getJ('coach_plano')}
+
+/* ── wizard ── */
+function wizRender(){
+ const w=CZ.WIZ[W.etapa];
+ $('#w-passo').textContent='PERGUNTA '+(W.etapa+1)+' DE '+CZ.WIZ.length;
+ $('#w-voltar').style.visibility=W.etapa===0?'hidden':'visible';
+ $('#w-avancar').textContent=W.etapa===CZ.WIZ.length-1?'Criar meu plano 🥊':'Continuar →';
+ const c=$('#w-corpo');c.innerHTML='';
+ const h=document.createElement('div');h.innerHTML='<h1>'+w.q+'</h1><p class="sub">'+w.d+'</p>';c.appendChild(h);
+ if(w.tipo==='area'){
+  const g=document.createElement('div');g.className='grid2';
+  CZ.AREAS.forEach(a=>{const b=document.createElement('button');b.className='area'+(W.resp.area===a.id?' on':'');b.innerHTML=a.e+' '+a.n+'<small>'+a.d+'</small>';b.onclick=()=>{W.resp.area=a.id;W.etapa++;wizRender()};g.appendChild(b)});
+  c.appendChild(g);
+ }else if(w.tipo==='texto'){
+  const t=document.createElement('textarea');t.placeholder=w.ph&&w.ph[W.resp.area]||'';t.value=W.resp[w.k]||'';
+  t.oninput=()=>W.resp[w.k]=t.value;c.appendChild(t);
+  if(w.opcional){const p=document.createElement('p');p.className='sub';p.style.marginTop='8px';p.textContent='(opcional — pula se quiser)';c.appendChild(p)}
+ }else if(w.tipo==='chip'){
+  const ch=document.createElement('div');ch.className='chips';
+  w.op.forEach(o=>{const b=document.createElement('button');b.className='chip'+(W.resp[w.k]===o?' on':'');b.textContent=o;b.onclick=()=>{W.resp[w.k]=o;wizRender()};ch.appendChild(b)});
+  c.appendChild(ch);
+ }else if(w.tipo==='nomes'){
+  const d=document.createElement('div');
+  d.innerHTML='<input type="text" id="wz-ap" maxlength="30" placeholder="como quer ser chamado? (ex: Luke)"><p class="sub" style="margin:10px 0"></p><input type="text" id="wz-co" maxlength="30" placeholder="nome do coach (ex: Coach, Capitão, Prof…)">';
+  c.appendChild(d);
+  const a=d.querySelector('#wz-ap'),n=d.querySelector('#wz-co');
+  a.value=(W.resp.nomes&&W.resp.nomes.apelido)||'';n.value=(W.resp.nomes&&W.resp.nomes.coach)||'';
+  a.oninput=()=>{W.resp.nomes=W.resp.nomes||{};W.resp.nomes.apelido=a.value};n.oninput=()=>{W.resp.nomes=W.resp.nomes||{};W.resp.nomes.coach=n.value};
+ }
+}
+function wizAvanca(){
+ const w=CZ.WIZ[W.etapa];
+ if(w.tipo==='nomes'){
+  const a=$('#wz-ap'),n=$('#wz-co');
+  W.resp.nomes={apelido:(a&&a.value.trim())||'',coach:(n&&n.value.trim())||'Coach'};
+  if(!W.resp.nomes.apelido)return toast('me diz como te chamo 😄 (pode ser apelido)');
+  criarDoWizard();return;
+ }
+ if(w.tipo==='area'&&!W.resp.area)return toast('escolhe uma área pra eu te ajudar 🙂');
+ if(w.tipo==='texto'&&!w.opcional&&!(W.resp[w.k]||'').trim()&&w.k!=='rotina')return toast(w.k==='objetivo'?'me conta o que você quer alcançar 🎯':'conta um pouquinho 🙂');
+ if(w.tipo==='chip'&&!W.resp[w.k])return toast('escolhe uma opção aí 😄');
+ if(W.etapa===CZ.WIZ.length-1){criarDoWizard();return}
+ W.etapa++;wizRender();
+}
+function criarDoWizard(){
+ const r=W.resp;
+ const plano=CZ.criarPlano(r.area,r.tempo==='5 min'?5:r.tempo==='10 min'?10:30,r.qndo);
+ const perfil={area:r.area,objetivo:(r.objetivo||'').trim(),rotina:(r.rotina||'').trim(),tentou:(r.tentou||'').trim(),tempo:r.tempo,qndo:r.qndo,nomes:{apelido:(r.nomes&&r.nomes.apelido).trim(),coach:(r.nomes&&r.nomes.coach).trim()||'Coach'},criado:CZ.hojeISO()};
+ ST.setJ('coach_perfil',perfil);ST.setJ('coach_plano',plano);ST.setJ('coach_log',{});
+ toast('plano criado! 🥊 bora pro primeiro dia');
+ ver('v-hoje');
+}
+
+/* ── hoje ── */
+function renderHoje(){
+ fire();
+ const m=$('#v-hoje'),pl=ST.getJ('coach_plano'),log=ST.getJ('coach_log')||{},p=ST.getJ('coach_perfil')||{};
+ if(!pl){ver('v-start');return}
+ const ap=(p.nomes&&p.nomes.apelido)||'champ',iso=CZ.hojeISO(),dia=CZ.acoesDoDia(pl,iso),l=log[iso];
+ const st=CZ.streak(log,iso);
+ let h='';
+ // fala do coach: falta > bom dia > Check-in
+ let faltas=0;for(let n=1;n<=14;n++){if(CZ.fezAlgo(log[CZ.isoMenos(n)]))break;faltas++}
+ if(faltas>0&&CZ.fezAlgo(log[CZ.isoMenos(1)])===false&&Object.keys(log).length>0){
+  h+='<div class="coachfala"><b>'+((p.nomes&&p.nomes.coach)||'Coach')+':</b> '+CZ.msgFalta(faltas,ap)+'</div>';
+  h+='<div class="card"><h3>O que atrapalhou?</h3><div class="chips" id="bloq">'+CZ.BLOQUEIOS.map(b=>'<button class="chip" data-b="'+b+'">'+b+'</button>').join('')+'</div><p class="sub" id="sug" style="margin:10px 0 0"></p></div>';
+ }else{
+  h+='<div class="coachfala"><b>'+((p.nomes&&p.nomes.coach)||'Coach')+':</b> '+CZ.msgBomDia(ap,st)+'</div>';
+ }
+ h+='<h2>Hoje ('+dia.dn+') · <span style="color:var(--muted);font-size:13px">'+dia.foco+'</span></h2>';
+ h+=dia.acoes.map((a,i)=>'<div class="acao'+(l&&l.feitas[i]?' done':'')+'" data-i="'+i+'"><div class="ck">'+(l&&l.feitas[i]?'✔':'')+'</div><div><div class="tt">'+a.t+'</div><div class="mn">'+(a.min?a.min+' min':'sem tempo fixo')+'</div></div></div>').join('');
+ // semana
+ const hjIdx=new Date().getDay();
+ h+='<div class="semana">'+pl.dias.map((d,i)=>{const iso2=CZ.isoMenos(hjIdx<=i?hjIdx-i+7:hjIdx-i);const fez=CZ.fezAlgo(log[iso2]);return '<div class="sd'+(i===hjIdx?' hoje':'')+(fez?' fez':'')+(!fez&&!CZ.fezAlgo(log[iso2])&&d.acoes.length?'':'')+'"><span>'+d.dn+'</span><b>'+(fez?'✔':'·')+'</b></div>'}).join('')+'</div>';
+ h+='<p class="sub" style="font-size:12px">✔ = dia com pelo menos 1 ação feita</p>';
+ h+='<div class="row"><button class="btn p" data-go="v-chat">💬 Falar com o coach</button><button class="btn g" data-go="v-plano">🗺️ Ver plano</button></div>';
+ m.innerHTML=h;
+ m.querySelectorAll('.acao').forEach(el=>el.onclick=()=>{
+  const i=+el.dataset.i,nv=!(l&&l.feitas[i]);
+  const lg=CZ.checkin(pl,ST.getJ('coach_log')||{},iso,i,nv);
+  ST.setJ('coach_log',lg);
+  if(nv){const tot=(l?l.feitas.filter(Boolean).length:0)+1;toast(CZ.msgCheckin(tot,dia.acoes.length,pl.area))}
+  renderHoje();
+ });
+ const bl=m.querySelector('#bloq');
+ if(bl)bl.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+  const b=c.dataset.b,s=CZ.SUGESTAO[b]||'';
+  m.querySelector('#sug').innerHTML='<b style="color:var(--brand)">'+((p.nomes&&p.nomes.coach)||'Coach')+':</b> '+s;
+  if(b==='o plano tá grande'){const np=CZ.ajustarPlano(pl,'encolher');ST.setJ('coach_plano',np);renderHoje()}
+ });
+ m.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>ver(b.dataset.go));
+}
+
+/* ── plano ── */
+function renderPlano(){
+ const m=$('#v-plano'),pl=ST.getJ('coach_plano'),p=ST.getJ('coach_perfil')||{},log=ST.getJ('coach_log')||{};
+ if(!pl){ver('v-start');return}
+ const ar=(CZ.AREAS.find(a=>a.id===pl.area)||{});
+ let h='<h1>🗺️ Teu plano</h1><p class="sub">v'+(pl.versao||1)+' · criado em '+pl.criado+(pl.nota?(' · '+pl.nota):'')+'</p>';
+ h+='<div class="card"><h3>'+ar.e+' '+(ar.n||'')+'</h3><div class="kv"><span>🎯 Objetivo</span><b style="color:var(--tx);font-weight:600;text-align:right">'+(p.objetivo||'—')+'</b></div>'+(pl.qndo?'<div class="kv"><span>⏰ Gatilho de horário</span><b>'+pl.qndo+'</b></div>':'')+'<div class="kv"><span>⏱️ Tempo assumido/dia</span><b>'+(p.tempo||'—')+'</b></div></div>';
+ h+='<div class="card"><h3>Semana</h3><table class="pl">'+pl.dias.map(d=>'<tr><td>'+d.dn+'</td><td><b>'+d.foco+'</b> — '+d.acoes.map(a=>a.t+(a.min?' ('+a.min+'min)':'')).join('<br>')+'</td></tr>').join('')+'</table></div>';
+ h+='<div class="card"><h3>📏 Regras de casa</h3>'+pl.regras.map(r=>'<p class="sub" style="margin:4px 0">• '+r+'</p>').join('')+'</div>';
+ const b=CZ.balanco(log,pl,CZ.hojeISO());
+ h+='<div class="card"><h3>🔧 Ajuste (balanço de 7 dias: '+b.pct+'%)</h3><p class="sub" style="margin-bottom:10px">'+b.veredito+'</p><div class="chips">'+
+  (b.ajuste!=='encolher'?'<button class="chip" data-aj="encolher">➖ Encolher plano</button>':'')+
+  (b.ajuste!=='evoluir'?'<button class="chip" data-aj="evoluir">➕ Evoluir plano</button>':'')+
+  '<button class="chip" data-aj="reset">🔄 Recomeçar plano</button></div></div>';
+ m.innerHTML=h;
+ m.querySelectorAll('[data-aj]').forEach(c=>c.onclick=()=>{
+  const t=c.dataset.aj;
+  if(t==='reset'){ST.setJ('coach_plano',CZ.criarPlano(pl.area,p.tempo==='5 min'?5:p.tempo==='10 min'?10:30,pl.qndo));toast('plano zerado — versão nova, mesma meta 🔄')}
+  else{ST.setJ('coach_plano',CZ.ajustarPlano(pl,t));toast(t==='encolher'?'plano encolhido 🌱':'plano evoluído 🔥')}
+  renderPlano();
+ });
+}
+
+/* ── chat ── */
+function histCtx(){
+ const log=ST.getJ('coach_log')||{},pl=ST.getJ('coach_plano')||{};
+ let s='\nÚLTIMOS DIAS: ';
+ for(let n=1;n<=7;n++){const iso=CZ.isoMenos(n),l=log[iso];if(l)s+=iso+': '+l.feitas.filter(Boolean).length+'/'+(CZ.acoesDoDia(pl,iso)||{acoes:[]}).acoes.length+' · '}
+ return s;
+}
+function renderChat(){
+ const lg=$('#chatlog');if(lg.dataset.on)return;
+ const hist=ST.getJ('coach_chat')||[];
+ if(!hist.length){
+  const p=ST.getJ('coach_perfil')||{},nc=(p.nomes&&p.nomes.coach)||'Coach',ap=(p.nomes&&p.nomes.apelido)||'';
+  hist.push({r:'ia',t:'Ei, '+ap+'! 👊 aqui é o '+nc+'. Pode me contar o que tá rolando, pedir ideia, ajuste de plano, ou só desabafar. No que que eu te ajudo?'});
+  ST.setJ('coach_chat',hist);
+ }
+ pintarChat();
+ lg.dataset.on='1';
+ $('#chatbar').style.paddingBottom='calc(10px + env(safe-area-inset-bottom))';
+}
+function pintarChat(){
+ const hist=ST.getJ('coach_chat')||[],lg=$('#chatlog');
+ lg.innerHTML=hist.slice(-60).map(m=>'<div class="msg '+(m.r==='ia'?'ia':'eu')+'">'+m.t.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</div>').join('');
+ lg.scrollTop=lg.scrollHeight;
+}
+async function enviar(){
+ const inp=$('#chatin'),t=(inp.value||'').trim();if(!t)return;
+ const hist=ST.getJ('coach_chat')||[];
+ hist.push({r:'eu',t});inp.value='';
+ hist.push({r:'ia',t:'…'});ST.setJ('coach_chat',hist);pintarChat();
+ const msgs=[{role:'system',content:dnaSistema()+histCtx()},
+   ...hist.slice(-16,-1).map(m=>({role:m.r==='ia'?'assistant':'user',content:m.t})),
+   {role:'user',content:t}];
+ try{
+  const r=await callAI(msgs);
+  hist[hist.length-1]={r:'ia',t:r.trim()};
+  ST.setJ('coach_chat',hist);pintarChat();
+ }catch(e){
+  hist[hist.length-1]={r:'ia',t:'⚠️ '+e.message};
+  ST.setJ('coach_chat',hist);pintarChat();
+ }
+}
+
+/* ── progresso ── */
+function renderProg(){
+ const m=$('#v-prog'),pl=ST.getJ('coach_plano'),log=ST.getJ('coach_log')||{},p=ST.getJ('coach_perfil')||{};
+ if(!pl){ver('v-start');return}
+ const ap=(p.nomes&&p.nomes.apelido)||'champ',nc=(p.nomes&&p.nomes.coach)||'Coach';
+ let tot=0,d30=0,f30=0;
+ for(let n=0;n<30;n++){const iso=CZ.isoMenos(n),l=log[iso];const prev=(CZ.acoesDoDia(pl,iso)||{acoes:[]}).acoes.length;if(l){tot+=l.feitas.filter(Boolean).length}d30+=prev;f30+=Math.min(l?l.feitas.filter(Boolean).length:0,prev)}
+ const st=CZ.streak(log,CZ.hojeISO()),b=CZ.balanco(log,pl,CZ.hojeISO());
+ let h='<h1>📈 Teu progresso</h1>';
+ h+='<div class="card"><h3>Balanço dos últimos 7 dias</h3><div class="kv"><span>Adesão</span><b>'+b.pct+'%</b></div><div class="barra" style="margin:8px 0"><i style="width:'+b.pct+'%"></i></div><div class="kv"><span>Ações feitas</span><b>'+b.prev+'/'+b.tot+'</b></div><div class="kv"><span>Dias no zero</span><b>'+b.zerados.length+'</b></div><p class="sub" style="margin:8px 0 0"><b style="color:var(--brand)">'+nc+':</b> '+b.veredito+'</p></div>';
+ h+='<div class="card"><h3>Números do '+ap+'</h3><div class="kv"><span>🔥 Ofensiva atual</span><b>'+st+' dia(s)</b></div><div class="kv"><span>✅ Ações feitas (30 dias)</span><b>'+tot+'</b></div><div class="kv"><span>📊 Adesão 30 dias</span><b>'+(d30?Math.round(f30/d30*100):0)+'%</b></div></div>';
+ h+='<div class="card"><h3>💡 '+nc+' recomenda</h3><p class="sub" style="margin:0">'+(b.ajuste==='encolher'?'Com adesão abaixo de 40%, o jogo é ENCOLHER: botão “Encolher plano” na aba 🗺️. Primeiro vira rotina, depois cresce.':(b.ajuste==='evoluir'?'Adesão forte! Quando quiser mais, usa “Evoluir plano” na aba 🗺️ — um pouquinho por vez.':('Na régua: entre 40% e 75% é normal e estável. Mantém o ritmo, e qualquer travada me chama no 💬.')))+'</p></div>';
+ m.innerHTML=h;
+}
+
+/* ── config ── */
+function renderCfg(){
+ const p=ST.getJ('coach_perfil')||{};
+ $('#cf-apelido').value=(p.nomes&&p.nomes.apelido)||'';
+ $('#cf-nome').value=(p.nomes&&p.nomes.coach)||'Coach';
+ const t=localStorage.getItem('coach_tema')||'escuro';
+ document.querySelectorAll('#cf-tema .chip').forEach(c=>c.classList.toggle('on',c.dataset.t===t));
+}
+function aplicarTema(t){if(t==='claro')document.documentElement.setAttribute('data-tema','claro');else document.documentElement.removeAttribute('data-tema');localStorage.setItem('coach_tema',t)}
+
+/* ── binds ── */
+$('#b-comecar').onclick=()=>{W={etapa:0,resp:CZ.wizResp(ST.getJ('coach_perfil')?ST.getJ('coach_perfil').area:'')};wizRender();ver('v-wizard')};
+$('#w-avancar').onclick=wizAvanca;
+$('#w-voltar').onclick=()=>{if(W.etapa>0){W.etapa--;wizRender()}};
+$('#b-enviar').onclick=enviar;
+$('#chatin').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviar()}});
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>ver(b.dataset.v));
+document.querySelectorAll('#cf-tema .chip').forEach(c=>c.onclick=()=>{aplicarTema(c.dataset.t);renderCfg()});
+$('#cf-apelido').oninput=e=>{const p=ST.getJ('coach_perfil')||{};p.nomes=p.nomes||{};p.nomes.apelido=e.target.value.trim();ST.setJ('coach_perfil',p)};
+$('#cf-nome').oninput=e=>{const p=ST.getJ('coach_perfil')||{};p.nomes=p.nomes||{};p.nomes.coach=e.target.value.trim()||'Coach';ST.setJ('coach_perfil',p)};
+$('#cf-apagar').onclick=()=>{
+ const b=$('#cf-apagar');
+ if(!ARM){ARM=true;b.textContent='⚠️ tem certeza? apaga TUDO';setTimeout(()=>{ARM=false;b.textContent='Apagar tudo'},4000);return}
+ ['coach_perfil','coach_plano','coach_log','coach_chat','coach_uso'].forEach(k=>ST.del(k));
+ W={etapa:0,resp:null};ARM=false;b.textContent='Apagar tudo';
+ ver('v-start');toast('tudo zerado — quando quiser, bora de novo 👊');
+};
+
+/* ── boot ── */
+aplicarTema(localStorage.getItem('coach_tema')||'escuro');
+if(temPerfil())ver('v-hoje');else ver('v-start');
+</script>
+</body>
+</html>
