@@ -1,6 +1,6 @@
 # 👊 IA Coach
 
-Um treinador que **pergunta como é tua vida de verdade**, monta um plano que cabe no seu dia, cobra com carinho e adapta o jogo quando a coisa aperta. Inspirado na melhor conversa de treino que já existiu (Coach Z & Sr. Luke 🫡).
+Um treinador que **pergunta como é tua vida de verdade**, monta um plano que cabe no seu dia, cobra com carinho e adapta o jogo quando a coisa aperta. Inspirado por uma conversa real de treino que funcionou de verdade 🫡 (anonimizada — nenhum dado pessoal, só o jeitão de treinar).
 
 ## Como funciona
 1. **Onboarding de 7 perguntas**: área (saúde, estudos, produtividade, projetos, conteúdo, pessoal), objetivo, rotina, o que já tentou, tempo real por dia, horário-gatilho e nomes (como te chamam / como você chama teu coach)
