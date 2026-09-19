@@ -287,7 +287,7 @@ async function callAI(msgs){
       if(!r.ok){erros.push(t.nome+' '+r.status);continue;}
       const d=await r.json();
       const txt=d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content;
-      if(txt&&/reached its budget|rate.?limit|quota exceeded|insufficient/i.test(txt)&&txt.length<500){erros.push(t.nome+' limite');continue;}
+      if(txt&&/reached its budget|rate.?limit|quota|insufficient|enough credits|top.?up|balance/i.test(txt)&&txt.length<500){erros.push(t.nome+' limite');continue;}
       if(txt){if(/openrouter/.test(t.nome))FAV.or=t.model;else if(/nvidia/.test(t.nome))FAV.nv=t.model;usaUso();return txt;}
       erros.push(t.nome+' vazia');
     }catch(e){erros.push(t.nome+' falhou');}
