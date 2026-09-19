@@ -255,7 +255,7 @@ const CZ={
  WIZ:[
   {k:'area',q:'Onde tua vida pesa mais agora?',d:'escolhe uma pra começar — o coach adapta o resto',tipo:'area'},
   {k:'objetivo',q:'O que você quer alcançar?',d:'em tuas palavras, sem formalidade',tipo:'texto',ph:{saude:'quero perder peso / ganhar força / ter mais energia…',estudos:'passar na prova / aprender X / parar de deixar pra depois…',produtividade:'parar de procrastinar / organizar a rotina…',projetos:'terminar meu site / lançar meu projeto…',conteudo:'postar toda semana / crescer o canal…',pessoal:'ler todo dia / dormir melhor / menos celular…'}},
-  {k:'rotina',q:'Como é tua rotina?',d:'que horas os dias ficam cheios? onde sobra respiro? (escola/trabalho, casa, fim de semana…)',tipo:'texto',ph:'tenho aula de manhã, chego meio-dia, à tarde fico em casa…'},
+  {k:'rotina',q:'Como é tua rotina?',d:'que horas os dias ficam cheios? onde sobra respiro? (escola/trabalho, casa, fim de semana…)',tipo:'texto',ph:'ex: curso/aula de manhã, tarde com espaços livres, fim de semana diferente…'},
   {k:'tentou',q:'Já tentou algo antes? O que atrapalhou?',d:'o passado é dado, não vergonha 😄 (pode pular)',tipo:'texto',ph:'comecei uma vez e parei depois de uma semana porque…',opcional:true},
   {k:'tempo',q:'Quanto tempo por dia você assume?',d:'seja HONESTO aqui — plano que cabe é plano que rola',tipo:'chip',op:['5 min','10 min','15-20 min','30+ min']},
   {k:'qndo',q:'Que horário te encaixa melhor?',d:'o plano vai amarrar nesse horário (gatilho!)',tipo:'chip',op:['de manhã','à tarde','à noite','varia']},
@@ -295,7 +295,7 @@ async function callAI(msgs){
   }
   throw new Error('IA lotada agora ('+erros.slice(0,3).join(' · ')+') — o coach já te deu o essencial offline; volta mais tarde 💙');
 }
-/* DNA do coach — destilado da conversa real que funcionou (Coach Z & Sr. Luke) */
+/* DNA do coach — destilado de uma conversa real que funcionou (anonimizada) */
 function dnaSistema(){
  const p=ST.getJ('coach_perfil')||{},pl=ST.getJ('coach_plano'),ap=(p.nomes&&p.nomes.apelido)||'champ',nc=(p.nomes&&p.nomes.coach)||'Coach';
  let ctx='\n\nCONTEXTO DO USUÁRIO: apelido: '+ap+'.'+
@@ -352,7 +352,7 @@ function wizRender(){
   c.appendChild(ch);
  }else if(w.tipo==='nomes'){
   const d=document.createElement('div');
-  d.innerHTML='<input type="text" id="wz-ap" maxlength="30" placeholder="como quer ser chamado? (ex: Luke)"><p class="sub" style="margin:10px 0"></p><input type="text" id="wz-co" maxlength="30" placeholder="nome do coach (ex: Coach, Capitão, Prof…)">';
+  d.innerHTML='<input type="text" id="wz-ap" maxlength="30" placeholder="como quer ser chamado? (um apelido que você goste)"><p class="sub" style="margin:10px 0"></p><input type="text" id="wz-co" maxlength="30" placeholder="nome do coach (ex: Coach, Capitão, Prof…)">';
   c.appendChild(d);
   const a=d.querySelector('#wz-ap'),n=d.querySelector('#wz-co');
   a.value=(W.resp.nomes&&W.resp.nomes.apelido)||'';n.value=(W.resp.nomes&&W.resp.nomes.coach)||'';
