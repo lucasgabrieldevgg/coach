@@ -6,8 +6,9 @@ Treinador **100% focado em treino**: pergunta como tua semana é de verdade, mon
 1. **Onboarding de 8 perguntas**: objetivo · onde treina (quarto/casa/parque/academia) · experiência · dias por semana · tempo por sessão · limitações físicas · rotina · nomes
 2. **📅 Hoje**: o treino do dia com **circuitos A/B** (exercício por exercício, com repetições do teu nível e cue de forma), cardio intervalado com o **teste da frase**, e registro de **como o treino veio** (😌 leve / 😅 na medida / 🥵 pesado)
 3. **🗺️ Plano**: semana organizada por dias disponíveis, regras de casa, **ciclo de 21 dias** e carga em **4 degraus** (sobrecarga progressiva): 2 treinos leves seguidos → o coach sugere subir · 3 pesados → sugere descer
-4. **💬 Coach**: IA especialista em treino (fila gratuita) que sabe teu plano, teu ciclo e teus últimos treinos
-5. **📈 Progresso**: adesão 7/30 dias, ofensiva 🔥, como os treinos vieram, fase do ciclo
+4. **🔁 Renovação de fase**: quando o ciclo fecha, você escolhe **quantas semanas quer pra se acostumar** com o treino novo (2/3/4) — o coach ajusta a carga pelo teu balanço, **varia o cronograma** (inverte A/B, cardio novo) e as abas Hoje e Plano atualizam na hora
+5. **💬 Coach**: IA especialista em treino (fila gratuita) que sabe teu plano, teu ciclo e teus últimos treinos — e **pergunta sobre tua vida** (sono, comida, energia) pra adaptar; fixe o que ela precisa lembrar com **📌** (fica em ⚙️ Ajustes → O que o coach lembra)
+6. **📈 Progresso**: adesão 7/30 dias, ofensiva 🔥, como os treinos vieram, fase do ciclo
 
 ## Cuidados que fazem parte
 - **Limitação física vira ajuste, não desculpa**: joelho → polichinelo vira marcha parada, afundo com amplitude curta; costas → substituições que protegem a lombar
