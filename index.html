@@ -134,8 +134,8 @@ table.pl td:first-child{font-weight:700;white-space:nowrap}
     <input type="text" id="cf-nome" maxlength="30" style="min-height:0">
   </div>
   <div class="card"><h3>🎨 Tema</h3><div class="chips" id="cf-tema"><button class="chip" data-t="escuro">🌙 escuro</button><button class="chip" data-t="claro">☀️ claro</button></div></div>
-  <div class="card"><h3>🧠 O que o coach lembra</h3><p class="sub" style="margin-bottom:8px">Coisas suas fixadas com 📌 no chat. Ele usa isso no treino e nas conversas.</p><div id="cf-mem"></div><button class="btn d" id="cf-memlimpa" style="margin-top:8px">Limpar memória</button></div>
-  <div class="card"><h3>🚮 Zona de perigo</h3><p class="sub" style="margin-bottom:10px">Apaga perfil, plano, check-ins e conversas. Não tem volta.</p><button class="btn d" id="cf-apagar">Apagar tudo</button></div>
+  <div class="card"><h3>🧠 O que o coach lembra</h3><p class="sub" style="margin-bottom:8px">Só as anotações 📌 do chat (teus dados de treino NÃO estão aqui — pra isso tem "Apagar tudo" abaixo).</p><div id="cf-mem"></div><button class="btn d" id="cf-memlimpa" style="margin-top:8px">Limpar anotações 📌</button></div>
+  <div class="card"><h3>🚮 Zona de perigo</h3><p class="sub" style="margin-bottom:10px">Apaga TUDO: perfil, treino, check-ins, chat e anotações. Não tem volta.</p><button class="btn d" id="cf-apagar">Apagar tudo</button></div>
 </main>
 
 <nav class="nav" id="nav" hidden>
@@ -457,7 +457,7 @@ function criarDoWizard(){
 function renderHoje(){
  fire();
  const m=$('#v-hoje'),pl=ST.getJ('coach_plano'),log=ST.getJ('coach_log')||{},p=ST.getJ('coach_perfil')||{};
- if(!pl){ver('v-start');return}
+ if(!pl||!Array.isArray(pl.dias)||!pl.dias.length){ST.del('coach_plano');ver('v-start');toast('teu treino tá inconsistente — bora montar de novo 🛠️');return}
  const ap=(p.nomes&&p.nomes.apelido)||'champ',nc=(p.nomes&&p.nomes.coach)||'Coach',iso=CZ.hojeISO(),dia=CZ.acoesDoDia(pl,iso),l=log[iso];
  const st=CZ.streak(log,iso);
  let h='';
@@ -512,7 +512,7 @@ function renderHoje(){
 /* ── plano ── */
 function renderPlano(){
  const m=$('#v-plano'),pl=ST.getJ('coach_plano'),p=ST.getJ('coach_perfil')||{},log=ST.getJ('coach_log')||{};
- if(!pl){ver('v-start');return}
+ if(!pl||!Array.isArray(pl.dias)||!pl.dias.length){ST.del('coach_plano');ver('v-start');toast('teu treino tá inconsistente — bora montar de novo 🛠️');return}
  const nc=(p.nomes&&p.nomes.coach)||'Coach';
  const c=CZ.ciclo(p,pl),ps=+p.proxSem||+p.cicloSemanas||3;
  let h='<h1>🗺️ Teu treino</h1>';
@@ -601,7 +601,7 @@ async function enviar(){
 /* ── progresso ── */
 function renderProg(){
  const m=$('#v-prog'),pl=ST.getJ('coach_plano'),log=ST.getJ('coach_log')||{},p=ST.getJ('coach_perfil')||{};
- if(!pl){ver('v-start');return}
+ if(!pl||!Array.isArray(pl.dias)||!pl.dias.length){ST.del('coach_plano');ver('v-start');toast('teu treino tá inconsistente — bora montar de novo 🛠️');return}
  const ap=(p.nomes&&p.nomes.apelido)||'champ',nc=(p.nomes&&p.nomes.coach)||'Coach';
  let tot=0,d30=0,f30=0;
  for(let n=0;n<30;n++){const iso=CZ.isoMenos(n),l=log[iso];const prev=(CZ.acoesDoDia(pl,iso)||{acoes:[]}).acoes.length;if(l){tot+=l.feitas.filter(Boolean).length}d30+=prev;f30+=Math.min(l?l.feitas.filter(Boolean).length:0,prev)}
@@ -623,10 +623,11 @@ function renderCfg(){
  $('#cf-nome').value=(p.nomes&&p.nomes.coach)||'Coach';
  const t=localStorage.getItem('coach_tema')||'escuro';
  document.querySelectorAll('#cf-tema .chip').forEach(c=>c.classList.toggle('on',c.dataset.t===t));
- const mem=ST.getJ('coach_mem')||[],mEl=$('#cf-mem');
+ let mem=ST.getJ('coach_mem');if(!Array.isArray(mem))mem=[];
+ const mEl=$('#cf-mem');
  mEl.innerHTML=mem.length?mem.map((x,i)=>'<div class="kv"><span>'+x.t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;')+'</span><button class="btn d" data-i="'+i+'" style="padding:4px 10px;font-size:12px">✖</button></div>').join(''):'<p class="sub" style="margin:0">(vazio — no chat, aperta 📌 na tua mensagem pra guardar algo)</p>';
  mEl.querySelectorAll('button').forEach(b=>b.onclick=()=>{const mm=ST.getJ('coach_mem')||[];mm.splice(+b.dataset.i,1);ST.setJ('coach_mem',mm);renderCfg()});
- $('#cf-memlimpa').onclick=()=>{ST.del('coach_mem');renderCfg();toast('memória limpa 🧽')};
+ $('#cf-memlimpa').onclick=()=>{ST.del('coach_mem');renderCfg();toast('anotações 📌 apagadas — teu treino e teus dados continuam aí')};
 }
 function aplicarTema(t){if(t==='claro')document.documentElement.setAttribute('data-tema','claro');else document.documentElement.removeAttribute('data-tema');localStorage.setItem('coach_tema',t)}
 
