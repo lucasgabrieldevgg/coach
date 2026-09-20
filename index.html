@@ -76,6 +76,8 @@ table.pl td:first-child{font-weight:700;white-space:nowrap}
 .msg{max-width:86%;padding:11px 14px;border-radius:15px;font-size:14px;white-space:pre-wrap;word-wrap:break-word}
 .msg.ia{background:var(--bubIA);border:1px solid var(--line);border-bottom-left-radius:5px;align-self:flex-start}
 .msg.eu{background:var(--bub);border-bottom-right-radius:5px;align-self:flex-end}
+.pk{background:none;border:0;font-size:11px;opacity:.55;cursor:pointer;margin-left:6px;vertical-align:middle}
+.pk.ok{opacity:1}
 #chatbar{position:static;background:var(--bg2);border-top:1px solid var(--line);padding:10px 0 2px;display:flex;gap:8px}
 #chatin{flex:1;min-height:44px;max-height:110px}
 .nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--bg2);border-top:1px solid var(--line);z-index:9;padding-bottom:env(safe-area-inset-bottom)}
@@ -132,6 +134,7 @@ table.pl td:first-child{font-weight:700;white-space:nowrap}
     <input type="text" id="cf-nome" maxlength="30" style="min-height:0">
   </div>
   <div class="card"><h3>🎨 Tema</h3><div class="chips" id="cf-tema"><button class="chip" data-t="escuro">🌙 escuro</button><button class="chip" data-t="claro">☀️ claro</button></div></div>
+  <div class="card"><h3>🧠 O que o coach lembra</h3><p class="sub" style="margin-bottom:8px">Coisas suas fixadas com 📌 no chat. Ele usa isso no treino e nas conversas.</p><div id="cf-mem"></div><button class="btn d" id="cf-memlimpa" style="margin-top:8px">Limpar memória</button></div>
   <div class="card"><h3>🚮 Zona de perigo</h3><p class="sub" style="margin-bottom:10px">Apaga perfil, plano, check-ins e conversas. Não tem volta.</p><button class="btn d" id="cf-apagar">Apagar tudo</button></div>
 </main>
 
@@ -178,11 +181,14 @@ const CZ={
  SUBST:{joelho:{'Polichinelo':'Marcha parada (baixo impacto)','Afundo':'Agachamento parcial (menor amplitude)'},
         costas:{'Mountain climber':'Prancha extra (+15s na prancha do dia)','Ponte de glúteo':'Ponte de glúteo (pés no chão, amplitude curta)'}},
  /* formato da semana por dias disponíveis (começa na segunda) */
- SEMANA:{3:['A','cardio','B','cardio','A','livre','descanso'],
-         4:['A','cardio','B','A','cardio','B','descanso'],
-         5:['A','B','cardio','A','B','cardio','descanso'],
-         6:['A','B','cardio','A','B','cardio','livre']},
+ SEMANA:{3:['A','livre','B','livre','cardio','livre','descanso'],
+         4:['A','livre','B','cardio','A','livre','descanso'],
+         5:['A','B','cardio','A','B','livre','descanso'],
+         6:['A','B','cardio','A','B','cardio','descanso']},
  FOCO_N:{A:'Circuito A 💪',B:'Circuito B 💪',cardio:'Cardio intervalado 🚶',livre:'Livre 🎲',descanso:'Descanso 🛋️'},
+ CARDIOS:[{t:'Caminhada/corrida leve intervalada: {MIN} min alternando ritmo forte e leve (teste da frase: no forte dá pra falar, não cantar)',cue:'aquece leve antes de acelerar'},
+          {t:'Cardio contínuo: {MIN} min num ritmo que dá pra manter (últimos 2 min pode acelerar se tiver energia)',cue:'constância > velocidade'},
+          {t:'Intervalo curto: {MIN} min de caminhada com 8 aceleradas de 30s no meio',cue:'acelera na reta, recupera devagar'}],
  REGRAS:['Dor aguda = parar. Desconforto de esforço = normal','Forma antes de repetição: melhor 8 certos que 15 tortos','Água todo dia e comida de verdade; doce liberado no equilíbrio 🍫','Sono é treino também: é dormindo que o corpo constrói','Compara com você mesmo, nunca com os outros'],
  objsDe(ids){return (ids||'').split('|').filter(Boolean).map(id=>CZ.OBJETIVOS.find(x=>x.id===id)||{e:'🥊',n:id})},
  objNomes(ids){const l=CZ.objsDe(ids);return l.length?l.map(o=>o.n).join(' + '):''},
@@ -197,8 +203,11 @@ const CZ={
   return t;
  },
  /* monta o plano semanal do perfil */
- criarPlano(perfil){
-  const semana=CZ.SEMANA[+perfil.dias]||CZ.SEMANA[3];
+ criarPlano(perfil,variacao){
+  variacao=variacao||0;
+  let semana=CZ.SEMANA[+perfil.dias]||CZ.SEMANA[3];
+  if(variacao%2===1)semana=semana.map(f=>f==='A'?'B':f==='B'?'A':f);
+  const card=CZ.CARDIOS[variacao%CZ.CARDIOS.length];
   const tier=perfil.tier||'pouco';
   const corte=perfil.tempo==='10';
   const cardioMin=perfil.tempo==='10'?20:(perfil.tempo==='20'?30:40);
@@ -211,7 +220,7 @@ const CZ={
     acoes=exs.map(ex=>({t:CZ.nomeDe(ex,tier,perfil.limit),min:1,cue:ex.cue}));
     acoes.push({t:'🔴 Rodadas: '+ (CZ.VOL[tier].rodadas) +' (a última só se tiver super bem)',min:0,cue:''});
    }else if(foco==='cardio'){
-    acoes=[{t:'Caminhada/corrida leve intervalada: '+cardioMin+' min alternando ritmo forte e leve (teste da frase: no forte dá pra falar, não cantar)',min:cardioMin,cue:'aquece leve antes de acelerar'}];
+    acoes=[{t:card.t.replace('{MIN}',cardioMin),min:cardioMin,cue:card.cue}];
    }else if(foco==='livre'){
     acoes=[{t:'Movimento que der vontade: dança, bike, caminhada com música, esporte',min:20,cue:'o dia livre também conta'}];
    }else{
@@ -219,7 +228,7 @@ const CZ={
    }
    return {dn,foco,acoes};
   });
-  return {area:'treino',criado:CZ.hojeISO(),cicloIni:CZ.hojeISO(),versao:1,tier,dias,regras:CZ.REGRAS.slice(),local:perfil.local,objetivo:perfil.objetivo,diasSemana:perfil.dias,tempoSalvo:perfil.tempo,limit:perfil.limit||'nenhum'};
+  return {area:'treino',criado:CZ.hojeISO(),cicloIni:CZ.hojeISO(),versao:1,tier,dias,regras:CZ.REGRAS.slice(),local:perfil.local,objetivo:perfil.objetivo,diasSemana:perfil.dias,tempoSalvo:perfil.tempo,limit:perfil.limit||'nenhum',variacao:variacao||0,renovadoNoCiclo:1};
  },
  acoesDoDia(plano,iso){const js=new Date(iso+'T12:00:00').getDay();return plano.dias[js]},
  checkin(plano,log,iso,i,val){
@@ -239,7 +248,7 @@ const CZ={
  feedbacks(log){return [0,1,2,3].map(n=>(log[CZ.isoMenos(n)]||{}).como).filter(Boolean)}, // inclui HOJE: o coach reage na hora
  condEvoluir(log){const f=CZ.feedbacks(log);return f.length>=2&&f[0]==='leve'&&f[1]==='leve'},
  condEncolher(log){const f=CZ.feedbacks(log);return f.length>=3&&f.slice(0,3).every(c=>c==='pesado')},
- ciclo(perfil){const ini=(perfil.cicloIni||perfil.criado||CZ.hojeISO());const diff=Math.floor((new Date(CZ.hojeISO()+'T12:00:00')-new Date(ini+'T12:00:00'))/864e5);return {n:Math.floor(diff/21)+1,dia:(diff%21)+1,fimProx:diff>=18&&diff<21}},
+ ciclo(perfil,plano){const ini=(perfil.cicloIni||perfil.criado||CZ.hojeISO());const total=7*(+perfil.cicloSemanas||3);const diff=Math.max(0,Math.floor((new Date(CZ.hojeISO()+'T12:00:00')-new Date(ini+'T12:00:00'))/864e5));const n=Math.floor(diff/total)+1,dia=(diff%total)+1;const fimProx=diff>=total-3&&diff<total;const renovar=fimProx||(n>1&&(plano?plano.renovadoNoCiclo:1)!==n);return {n,dia,total,fimProx,renovar}},
  balanco(log,plano,hoje){
   let prev=0,tot=0,zerados=[];
   for(let n=1;n<=7;n++){
@@ -272,6 +281,22 @@ const CZ={
   p.versao=(p.versao||1)+1;p.nota=nota;
   p.dias=CZ.criarPlano({dias:p.diasSemana||3,tempo:p.tempoSalvo||'40',limit:p.limit||'nenhum',tier:p.tier,local:p.local,objetivo:p.objetivo}).dias;
   return p;
+ },
+ /* renovação de fase: carga sobe/desce pelo balanço+feedback, cronograma varia, semanas escolhidas pelo usuário */
+ renovarPlano(perfil,plano,log,semanas){
+  const sem=+semanas||+perfil.cicloSemanas||3;
+  const b=CZ.balanco(log,plano,CZ.hojeISO());
+  let dir='manter';
+  if(CZ.condEvoluir(log)||b.pct>=75)dir='evoluir';
+  else if(CZ.condEncolher(log)||b.pct<40)dir='encolher';
+  const p=CZ.ajustarPlano(plano,dir);
+  p.variacao=(plano.variacao||0)+1;
+  p.dias=CZ.criarPlano({dias:p.diasSemana||'5',tempo:p.tempoSalvo||'40',limit:p.limit||'nenhum',tier:p.tier,local:p.local,objetivo:p.objetivo},p.variacao).dias;
+  p.cicloIni=CZ.hojeISO();
+  p.renovadoNoCiclo=1;
+  p.semanas=sem;
+  p.nota='Fase nova: '+sem+' semana'+(sem>1?'s':'')+' · '+(p.variacao%2===1?'cronograma invertido':'cronograma original')+' · carga: '+(dir==='evoluir'?'subiu':dir==='encolher'?'desceu':'mantém');
+  return {plano:p,dir};
  },
  BLOQUEIOS:['sem tempo','cansado/a','sem vontade hoje','não lembrei','o treino tá pesado','outra…'],
  SUGESTAO:{'sem tempo':'faz a versão de 10 minutos: 3 exercícios, 2 rodadas. Zero quebrado muda o jogo','cansado/a':'dia leve, então: só o circuito sem a última rodada, devagar. Descanso planejado não é derrota','sem vontade hoje':'regra dos 2 minutos: começa só pra experimentar. Vontade vem DEPOIS de começar, quase sempre','não lembrei':'vamos amarrar num gatilho: logo DEPOIS de [coisa que você já faz todo dia], você treina. Me diz o gatilho no 💬','o treino tá pesado':'encolho a carga por um tempo — desce um degrau no botão do 🗺️. Depois a gente sobe de novo','outra…':'me conta no 💬 o que travou — adaptar é parte do processo, não fraqueza'},
@@ -335,16 +360,18 @@ function dnaSistema(){
   (p.dias?('\ndias/semana: '+p.dias):'')+(p.tempo?('\ntempo/sessão: '+p.tempo+' min'):'')+
   (limTxt?('\nlimitação: '+limTxt+' (respeitar!)'):'')+
   (p.rotina?('\nrotina: '+p.rotina):'');
- if(pl){const c=CZ.ciclo(p);ctx+='\nplano v'+pl.versao+' · carga: degrau "'+pl.tier+'" · ciclo '+c.n+', dia '+c.dia+'/21 · semana: '+pl.dias.map(d=>d.dn+': '+d.foco).join(' · ');}
+ if(pl){const c=CZ.ciclo(p,pl);ctx+='\nplano v'+pl.versao+' (fase '+(pl.variacao||0)+') · carga: degrau "'+pl.tier+'" · ciclo de '+(+p.cicloSemanas||3)+' semanas, agora no ciclo '+c.n+', dia '+c.dia+'/'+c.total+' · semana: '+pl.dias.map(d=>d.dn+': '+d.foco).join(' · ')+(c.renovar?' · O CICLO FECHOU: converse sobre a próxima fase (quantas semanas ele quer pra se acostumar) e lembre ele de renovar no 🗺️':'');}
  const st=CZ.streak(ST.getJ('coach_log')||{},CZ.hojeISO());
  const fb=CZ.feedbacks(ST.getJ('coach_log')||{});
- ctx+='\nofensiva: '+st+' dia(s)'+(fb.length?('\núltimos treinos (pra ele mesmo): '+fb.join(', ')):'')+'.';
+ ctx+='\nofensiva: '+st+' dia(s)'+(fb.length?('\núltimos treinos (pra ele mesmo): '+fb.join(', ')):'');
+ const mem=ST.getJ('coach_mem')||[];
+ ctx+=(mem.length?('\nCOISAS QUE ELE TE CONTOU (fixou com 📌 — use com naturalidade): '+mem.slice(-15).map(x=>x.t).join(' | ')):'');
  return 'Você é o '+nc+', treinador de TREINO dentro do app IA Coach. O usuário se chama '+ap+'.\n'+
  'JEITÃO: treinador que APOIA — quase um amigo mais experiente: apelido carinhoso, 1-3 emojis, comemora vitória pequena, ZERO culpa, humor leve, português BR informal ("bora", "issa"). Oferece caminhos A/B quando der. Explica o PORQUÊ em uma frase quando ensina algo.\n'+
  'MÉTODO: alterna dia intenso e dia leve; circuito no local dele com rodadas (a extra só se estiver super bem); cardio intervalado com o teste da frase (no ritmo forte dá pra falar, mas não cantar); forma antes de repetição; sobrecarga progressiva por degraus a cada ciclo de ~3 semanas, quando a adesão tá boa OU dois treinos seguidos vieram "leves"; descanso é parte do treino (estímulo destrói, descanso constrói).\n'+
  'CIÊNCIA (honesto, SEM inventar número ou estudo): teste da fala pra intensidade; sobrecarga progressiva; sono e proteína ajudam na recuperação; água; consistência vence intensidade; cues de forma (joelho alinha com o pé, lombar apoiada na prancha, descer com controle). Se não souber, diz que não sabe.\n'+
  'LIMITES (IMPORTANTES): o usuário pode ser menor de idade — NUNCA prescreva dieta restritiva, déficit calórico agressivo, suplemento, meta de peso agressiva ou prometa resultado de peso em X tempo. Foco: equilíbrio, força, energia, sono e autoestima. Peso e corpo como assunto sério → profissional de saúde/nutricionista. Dor aguda = parar; dor persistente = procurar profissional. Sinal de sofrimento real (tristeza profunda, desesperança) → acolher e sugerir falar com um adulto de confiança (CVV 188 se grave). Nada 18+.\n'+
- 'FORMATO: 2-6 frases, uma pergunta por vez, sem parede de texto. Pode sugerir ajuste de treino em texto; os botões de aplicar são do app.'+ctx;
+ 'CURIOSIDADE ATIVA: ainda não sabe a rotina dele (sono, comida, energia, horários livres)? Pergunte UMA coisa por vez nas primeiras mensagens e adapte o treino com o que ouvir. Quando ele contar algo importante, lembre do 📌 na mensagem dele (o app guarda pra você).\nFORMATO: 2-6 frases, uma pergunta por vez, sem parede de texto. Pode sugerir ajuste de treino em texto; os botões de aplicar são do app.'+ctx;
 }
 
 /* ═══ app (DOM) ═══ */
@@ -441,6 +468,8 @@ function renderHoje(){
  }else{
   h+='<div class="coachfala"><b>'+nc+':</b> '+CZ.msgBomDia(ap,st)+'</div>';
  }
+ const cc=CZ.ciclo(p,pl);
+ if(cc.renovar)h+='<div class="coachfala"><b>'+nc+':</b> teu ciclo fechou 🔄 bora no 🗺️ montar a FASE NOVA (você escolhe quantas semanas)</div>';
  if(CZ.condEvoluir(log))h+='<div class="coachfala"><b>'+nc+':</b> os últimos treinos vieram LEVES… teu corpo tá pedindo o próximo degrau 📈 (botão "Evoluir" no 🗺️)</div>';
  if(CZ.condEncolher(log))h+='<div class="coachfala"><b>'+nc+':</b> três treinos pesados seguidos — deixa eu descer a carga um pouquinho pra você respirar 🌱 (botão "Encolher" no 🗺️)</div>';
  h+='<h2>Hoje ('+dia.dn+') · '+CZ.FOCO_N[dia.foco]+'</h2>';
@@ -485,9 +514,10 @@ function renderPlano(){
  const m=$('#v-plano'),pl=ST.getJ('coach_plano'),p=ST.getJ('coach_perfil')||{},log=ST.getJ('coach_log')||{};
  if(!pl){ver('v-start');return}
  const nc=(p.nomes&&p.nomes.coach)||'Coach';
- const c=CZ.ciclo(p);
+ const c=CZ.ciclo(p,pl),ps=+p.proxSem||+p.cicloSemanas||3;
  let h='<h1>🗺️ Teu treino</h1>';
- h+='<div class="ciclo"><span class="n">🔁</span><div><b>Ciclo '+c.n+' · dia '+c.dia+'/21</b><br><span class="sub" style="margin:0;font-size:12.5px">'+(c.fimProx?'balanço do ciclo chegando! a semana que vem a gente evolui a carga 📈':'carga atual: degrau "'+(pl.tier||'pouco')+'" — reps e segundos da tua altura')+'</span></div></div>';
+ h+='<div class="ciclo"><span class="n">🔁</span><div><b>Ciclo '+c.n+' · dia '+c.dia+'/'+c.total+'</b><br><span class="sub" style="margin:0;font-size:12.5px">'+(c.fimProx?'balanço do ciclo chegando! a semana que vem a gente evolui a carga 📈':'carga atual: degrau "'+(pl.tier||'pouco')+'" — reps e segundos da tua altura')+'</span></div></div>';
+ if(c.renovar)h+='<div class="card" style="border-color:var(--brand)"><h3>🔁 Ciclo fechou! Bora montar a FASE NOVA</h3><p class="sub" style="margin-bottom:8px">Quantas semanas você quer pra se acostumar com o treino novo?</p><div class="chips" id="ren"><button class="chip'+(ps===2?' hot':'')+'" data-sem="2">2 semanas</button><button class="chip'+(ps===3?' hot':'')+'" data-sem="3">3 semanas</button><button class="chip'+(ps===4?' hot':'')+'" data-sem="4">4 semanas</button></div><div class="row"><button class="btn p" id="b-renovar">🔄 Renovar fase (coach decide)</button></div><p class="sub" style="margin:8px 0 0;font-size:12px">O coach ajusta a carga pelo teu balanço e varia o cronograma — Hoje e Plano atualizam na hora. Quer opinião dele antes? Pergunta no 💬 (ele sabe teu ciclo).</p></div>';
  h+='<div class="card"><h3>'+((CZ.objsDe(pl.objetivo)[0]||{e:'🥊'}).e)+' Objetivo: '+(CZ.objNomes(pl.objetivo)||'—')+'</h3><div class="kv"><span>📍 Local</span><b>'+((CZ.LOCAIS.find(l=>l.id===pl.local)||{}).n||'—')+'</b></div><div class="kv"><span>📊 Versão</span><b>v'+(pl.versao||1)+(pl.nota?(' · '+pl.nota):'')+'</b></div></div>';
  h+='<div class="card"><h3>Semana</h3><table class="pl">'+pl.dias.map(d=>'<tr><td>'+d.dn+'</td><td><b>'+CZ.FOCO_N[d.foco]+'</b><br>'+d.acoes.map(a=>'• '+a.t).join('<br>')+'</td></tr>').join('')+'</table></div>';
  h+='<div class="card"><h3>📏 Regras de casa</h3>'+pl.regras.map(r=>'<p class="sub" style="margin:4px 0">• '+r+'</p>').join('')+'</div>';
@@ -504,6 +534,19 @@ function renderPlano(){
   else{ST.setJ('coach_plano',CZ.ajustarPlano(pl,t));toast(t==='encolher'?'carga desceu um degrau 🌱':'carga subiu um degrau 📈')}
   renderPlano();
  });
+ m.querySelectorAll('#ren .chip').forEach(ch=>ch.onclick=()=>{
+  const pf=ST.getJ('coach_perfil')||{};pf.proxSem=+ch.dataset.sem;ST.setJ('coach_perfil',pf);
+  toast('anotado: próxima fase de '+ch.dataset.sem+' semanas ⏳');renderPlano();
+ });
+ const br=m.querySelector('#b-renovar');
+ if(br)br.onclick=()=>{
+  const pf=ST.getJ('coach_perfil')||{};
+  const r=CZ.renovarPlano(pf,pl,ST.getJ('coach_log')||{},pf.proxSem||pf.cicloSemanas||3);
+  pf.cicloSemanas=r.plano.semanas;pf.proxSem=null;pf.cicloIni=CZ.hojeISO();
+  ST.setJ('coach_perfil',pf);ST.setJ('coach_plano',r.plano);
+  toast(r.dir==='evoluir'?'fase nova montada — a carga subiu! 📈':(r.dir==='encolher'?'fase nova montada — carga mais leve 🌱':'fase nova montada — cronograma novo 🔄'));
+  renderPlano();
+ };
 }
 
 /* ── chat ── */
@@ -518,7 +561,7 @@ function renderChat(){
  const hist=ST.getJ('coach_chat')||[];
  if(!hist.length){
   const p=ST.getJ('coach_perfil')||{},nc=(p.nomes&&p.nomes.coach)||'Coach',ap=(p.nomes&&p.nomes.apelido)||'';
-  hist.push({r:'ia',t:'Ei, '+ap+'! 🥊 aqui é o '+nc+'. Pode me contar como o treino tá rolando, pedir ajuste, tirar dúvida de exercício, ou desabafar. No que que eu te ajudo?'});
+  hist.push({r:'ia',t:'Ei, '+ap+'! 🥊 aqui é o '+nc+'. Me conta como o treino tá rolando — e tua semana fora dele também (sono, comida, o que tá apertado) que eu uso isso no teu plano. No que que eu te ajudo?'});
   ST.setJ('coach_chat',hist);
  }
  pintarChat();
@@ -528,7 +571,13 @@ function renderChat(){
 }
 function pintarChat(){
  const hist=ST.getJ('coach_chat')||[],lg=$('#chatlog');
- lg.innerHTML=hist.slice(-60).map(x=>'<div class="msg '+(x.r==='ia'?'ia':'eu')+'">'+x.t.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</div>').join('');
+ lg.innerHTML=hist.slice(-60).map(x=>'<div class="msg '+(x.r==='ia'?'ia':'eu')+'">'+x.t.replace(/&/g,'&amp;').replace(/</g,'&lt;')+(x.r==='eu'?' <button class="pk" data-t="'+encodeURIComponent(x.t)+'" title="guardar isso sobre você">📌</button>':'')+'</div>').join('');
+ lg.querySelectorAll('.pk').forEach(b=>b.onclick=()=>{
+  const t=decodeURIComponent(b.dataset.t),mem=ST.getJ('coach_mem')||[];
+  if(mem.some(x=>x.t===t))return;
+  mem.push({t,dia:CZ.hojeISO()});ST.setJ('coach_mem',mem.slice(-30));
+  toast('guardado! o coach lembra disso 💭');b.textContent='✓';b.classList.add('ok');
+ });
  lg.scrollTop=lg.scrollHeight;
 }
 async function enviar(){
@@ -556,13 +605,13 @@ function renderProg(){
  const ap=(p.nomes&&p.nomes.apelido)||'champ',nc=(p.nomes&&p.nomes.coach)||'Coach';
  let tot=0,d30=0,f30=0;
  for(let n=0;n<30;n++){const iso=CZ.isoMenos(n),l=log[iso];const prev=(CZ.acoesDoDia(pl,iso)||{acoes:[]}).acoes.length;if(l){tot+=l.feitas.filter(Boolean).length}d30+=prev;f30+=Math.min(l?l.feitas.filter(Boolean).length:0,prev)}
- const st=CZ.streak(log,CZ.hojeISO()),b=CZ.balanco(log,pl,CZ.hojeISO()),c=CZ.ciclo(p);
+ const st=CZ.streak(log,CZ.hojeISO()),b=CZ.balanco(log,pl,CZ.hojeISO()),c=CZ.ciclo(p,pl);
  const fbs=CZ.feedbacks(log);
  let mix='';
  ['leve','ok','pesado'].forEach(k=>{const n=fbs.filter(x=>x===k).length;if(n)mix+=k+': '+n+' · '});
  let h='<h1>📈 Teu progresso</h1>';
  h+='<div class="card"><h3>Balanço dos últimos 7 dias</h3><div class="kv"><span>Adesão</span><b>'+b.pct+'%</b></div><div class="barra" style="margin:8px 0"><i style="width:'+b.pct+'%"></i></div><div class="kv"><span>Marcações feitas</span><b>'+b.prev+'/'+b.tot+'</b></div><div class="kv"><span>Dias no zero</span><b>'+b.zerados.length+'</b></div><p class="sub" style="margin:8px 0 0"><b style="color:var(--brand)">'+nc+':</b> '+b.veredito+'</p></div>';
- h+='<div class="card"><h3>Números do '+ap+'</h3><div class="kv"><span>🔥 Ofensiva atual</span><b>'+st+' dia(s)</b></div><div class="kv"><span>✅ Marcações (30 dias)</span><b>'+tot+'</b></div><div class="kv"><span>📊 Adesão 30 dias</span><b>'+(d30?Math.round(f30/d30*100):0)+'%</b></div><div class="kv"><span>🔁 Ciclo</span><b>'+c.n+' · dia '+c.dia+'/21</b></div>'+(mix?('::<div class="kv"><span>😵 Como os treinos vieram</span><b>'+mix.replace(/ · $/,'')+'</b></div>'):'')+'</div>';
+ h+='<div class="card"><h3>Números do '+ap+'</h3><div class="kv"><span>🔥 Ofensiva atual</span><b>'+st+' dia(s)</b></div><div class="kv"><span>✅ Marcações (30 dias)</span><b>'+tot+'</b></div><div class="kv"><span>📊 Adesão 30 dias</span><b>'+(d30?Math.round(f30/d30*100):0)+'%</b></div><div class="kv"><span>🔁 Ciclo</span><b>'+c.n+' · dia '+c.dia+'/'+c.total+'</b></div>'+(mix?('::<div class="kv"><span>😵 Como os treinos vieram</span><b>'+mix.replace(/ · $/,'')+'</b></div>'):'')+'</div>';
  h+='<div class="card"><h3>💡 '+nc+' recomenda</h3><p class="sub" style="margin:0">'+(CZ.condEvoluir(log)?'Dois treinos leves seguidos: teu corpo tá pronto pro próximo degrau — usa "Evoluir carga" no 🗺️.':(CZ.condEncolher(log)?'Três pesados seguidos: desce um degrau, respira e depois sobe de novo. Isso é treino esperto, não derrota.':(b.ajuste==='encolher'?'Adesão abaixo de 40%? Encolhe a carga primeiro, rotina depois. Primeiro o hábito, depois a heroica.':(b.ajuste==='evoluir'?'Adesão forte! Quando o ciclo fechar (dia 21), evolui a carga 📈':'Na régua: mantém o ritmo, marca os treinos e me chama no 💬 se travar.'))))+'</p></div>';
  m.innerHTML=h;
 }
@@ -574,6 +623,10 @@ function renderCfg(){
  $('#cf-nome').value=(p.nomes&&p.nomes.coach)||'Coach';
  const t=localStorage.getItem('coach_tema')||'escuro';
  document.querySelectorAll('#cf-tema .chip').forEach(c=>c.classList.toggle('on',c.dataset.t===t));
+ const mem=ST.getJ('coach_mem')||[],mEl=$('#cf-mem');
+ mEl.innerHTML=mem.length?mem.map((x,i)=>'<div class="kv"><span>'+x.t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;')+'</span><button class="btn d" data-i="'+i+'" style="padding:4px 10px;font-size:12px">✖</button></div>').join(''):'<p class="sub" style="margin:0">(vazio — no chat, aperta 📌 na tua mensagem pra guardar algo)</p>';
+ mEl.querySelectorAll('button').forEach(b=>b.onclick=()=>{const mm=ST.getJ('coach_mem')||[];mm.splice(+b.dataset.i,1);ST.setJ('coach_mem',mm);renderCfg()});
+ $('#cf-memlimpa').onclick=()=>{ST.del('coach_mem');renderCfg();toast('memória limpa 🧽')};
 }
 function aplicarTema(t){if(t==='claro')document.documentElement.setAttribute('data-tema','claro');else document.documentElement.removeAttribute('data-tema');localStorage.setItem('coach_tema',t)}
 
@@ -590,7 +643,7 @@ $('#cf-nome').oninput=e=>{const p=ST.getJ('coach_perfil')||{};p.nomes=p.nomes||{
 $('#cf-apagar').onclick=()=>{
  const b=$('#cf-apagar');
  if(!ARM){ARM=true;b.textContent='⚠️ tem certeza? apaga TUDO';setTimeout(()=>{ARM=false;b.textContent='Apagar tudo'},4000);return}
- ['coach_perfil','coach_plano','coach_log','coach_chat','coach_uso'].forEach(k=>ST.del(k));
+ ['coach_perfil','coach_plano','coach_log','coach_chat','coach_uso','coach_mem'].forEach(k=>ST.del(k));
  W={etapa:0,resp:null};ARM=false;b.textContent='Apagar tudo';
  ver('v-start');toast('tudo zerado — quando quiser, bora de novo 👊');
 };
