@@ -183,6 +183,8 @@ const CZ={
          6:['A','B','cardio','A','B','cardio','livre']},
  FOCO_N:{A:'Circuito A 💪',B:'Circuito B 💪',cardio:'Cardio intervalado 🚶',livre:'Livre 🎲',descanso:'Descanso 🛋️'},
  REGRAS:['Dor aguda = parar. Desconforto de esforço = normal','Forma antes de repetição: melhor 8 certos que 15 tortos','Água todo dia e comida de verdade; doce liberado no equilíbrio 🍫','Sono é treino também: é dormindo que o corpo constrói','Compara com você mesmo, nunca com os outros'],
+ objsDe(ids){return (ids||'').split('|').filter(Boolean).map(id=>CZ.OBJETIVOS.find(x=>x.id===id)||{e:'🥊',n:id})},
+ objNomes(ids){const l=CZ.objsDe(ids);return l.length?l.map(o=>o.n).join(' + '):''},
  nomeDe(ex,tier,limit){
   const v=CZ.VOL[tier]||CZ.VOL.pouco;
   let t=ex.t;
@@ -277,16 +279,16 @@ const CZ={
  msgBomDia(apelido,st){return st>1?('Bom dia, '+apelido+'! 🔥 ofensiva de '+st+' dia'+(st>1?'s':'')+' — bora manter a corrente'):'Bom dia, '+apelido+'! bora pro treino? o primeiro passo de hoje tá logo aí 👇'},
  /* wizard: 8 perguntas do treino */
  WIZ:[
-  {k:'objetivo',q:'Qual é o objetivo agora?',tipo:'opc',ops:'OBJETIVOS'},
+  {k:'objetivo',q:'Qual é o objetivo agora?',d:'pode marcar mais de um',tipo:'opc',ops:'OBJETIVOS',multi:true},
   {k:'local',q:'Onde você vai treinar?',tipo:'opc',ops:'LOCAIS'},
   {k:'exp',q:'Qual tua experiência com treino?',tipo:'opc',ops:'EXPS'},
   {k:'dias',q:'Quantos dias por semana você assume?',tipo:'opc',ops:'DIASOP'},
   {k:'tempo',q:'Quanto tempo por sessão?',tipo:'opc',ops:'TEMPOS'},
-  {k:'limit',q:'Alguma limitação física?',d:'pra eu escolher exercícios que respeitem teu corpo',tipo:'opc',ops:'LIMITS'},
+  {k:'limit',q:'Alguma limitação física?',d:'pode marcar mais de uma — pra eu escolher exercícios que respeitem teu corpo',tipo:'opc',ops:'LIMITS',multi:true},
   {k:'rotina',q:'Como é tua semana?',d:'onde os dias ficam cheios? onde cabe o treino? (me ajuda a ajustar o plano na conversa)',tipo:'texto',opcional:true},
   {k:'nomes',q:'Última coisa!',d:'como te chamo e como você quer chamar teu coach?',tipo:'nomes'}],
- wizResp(){const r={objetivo:'',local:'',exp:'',dias:'',tempo:'',limits:[],rotina:'',nomes:{apelido:'',coach:''}};return r},
- wizCompleto(r){return !!(r.objetivo&&r.local&&r.exp&&r.dias&&r.tempo&&r.limits&&r.limits.length&&r.nomes&&r.nomes.apelido)}
+ wizResp(){const r={objetivo:[],local:'',exp:'',dias:'',tempo:'',limit:[],rotina:'',nomes:{apelido:'',coach:''}};return r},
+ wizCompleto(r){return !!(r.objetivo&&r.objetivo.length&&r.local&&r.exp&&r.dias&&r.tempo&&r.limit&&r.limit.length&&r.nomes&&r.nomes.apelido)}
 };
 /*CZ-END*/
 
@@ -323,7 +325,7 @@ async function callAI(msgs){
 /* DNA do coach de treino — estilo/método parafraseados (sem exemplo literal, sem dado pessoal) */
 function dnaSistema(){
  const p=ST.getJ('coach_perfil')||{},pl=ST.getJ('coach_plano'),ap=(p.nomes&&p.nomes.apelido)||'champ',nc=(p.nomes&&p.nomes.coach)||'Coach';
- const obj=(CZ.OBJETIVOS.find(o=>o.id===p.objetivo)||{}).n,loc=(CZ.LOCAIS.find(l=>l.id===p.local)||{}).n,exp=(CZ.EXPS.find(e=>e.id===p.exp)||{}).n;
+ const obj=CZ.objNomes(p.objetivo),loc=(CZ.LOCAIS.find(l=>l.id===p.local)||{}).n,exp=(CZ.EXPS.find(e=>e.id===p.exp)||{}).n;
  let limTxt='';(p.limit||'').split('|').forEach(id=>{const L=CZ.LIMITS.find(x=>x.id===id);if(L&&id!=='nenhum')limTxt+=(limTxt?' + ':'')+L.n});
  let ctx='\n\nCONTEXTO: apelido: '+ap+
   (obj?('\nobjetivo: '+obj):'')+
@@ -371,14 +373,13 @@ function wizRender(){
   const g=document.createElement('div');g.className='grid2';
   CZ[w.ops].forEach(o=>{
    const b=document.createElement('button');
-   const on=w.ops==='LIMITS'?(W.resp.limits||[]).includes(o.id):(W.resp[w.k]===o.id);
+   const on=w.multi?(W.resp[w.k]||[]).includes(o.id):(W.resp[w.k]===o.id);
    b.className='area'+(on?' on':'');
    b.innerHTML=(o.e?o.e+' ':'')+o.n+(o.d?'<small>'+o.d+'</small>':'');
    b.onclick=()=>{
-    if(w.ops==='LIMITS'){
-     W.resp.limits=W.resp.limits||[];
-     if(o.id==='nenhum')W.resp.limits=['nenhum'];
-     else{W.resp.limits=W.resp.limits.filter(x=>x!=='nenhum');const i=W.resp.limits.indexOf(o.id);if(i>=0)W.resp.limits.splice(i,1);else W.resp.limits.push(o.id)}
+    if(w.multi){
+     if(o.id==='nenhum')W.resp[w.k]=['nenhum'];
+     else{const a=W.resp[w.k]=W.resp[w.k]||[];const z=a.indexOf('nenhum');if(z>=0)a.splice(z,1);const i=a.indexOf(o.id);if(i>=0)a.splice(i,1);else a.push(o.id)}
      wizRender();return;
     }
     W.resp[w.k]=o.id;setTimeout(()=>{if(W.etapa<CZ.WIZ.length-1){W.etapa++;wizRender()}},130);
@@ -406,7 +407,7 @@ function wizAvanca(){
   if(!W.resp.nomes.apelido)return toast('me diz como te chamo 😄 (pode ser apelido)');
   criarDoWizard();return;
  }
- if(w.ops==='LIMITS'){if(!(W.resp.limits&&W.resp.limits.length))return toast('escolhe pelo menos uma (ou "Nenhuma") 😄')}
+ if(w.multi){if(!(W.resp[w.k]&&W.resp[w.k].length))return toast('escolhe pelo menos uma'+(w.ops==='LIMITS'?' (ou "Nenhuma")':'')+' 😄')}
  else if(w.tipo==='opc'&&!W.resp[w.k])return toast('escolhe uma opção aí 😄');
  if(w.tipo==='texto'){if(W.etapa===CZ.WIZ.length-1){criarDoWizard();return}W.etapa++;wizRender();return}
  if(W.etapa===CZ.WIZ.length-1){criarDoWizard();return}
@@ -414,7 +415,7 @@ function wizAvanca(){
 }
 function criarDoWizard(){
  const r=W.resp;
- const perfil={v:2,objetivo:r.objetivo,local:r.local,exp:r.exp,dias:r.dias,tempo:r.tempo,limit:(r.limits&&r.limits.length?r.limits.join('|'):'nenhum'),rotina:(r.rotina||'').trim(),nomes:{apelido:r.nomes.apelido.trim(),coach:r.nomes.coach.trim()||'Coach'},criado:CZ.hojeISO(),cicloIni:CZ.hojeISO(),tier:r.exp==='zero'?'zero':(r.exp==='meses'?'meses':'pouco')};
+ const perfil={v:2,objetivo:(r.objetivo||[]).join('|'),local:r.local,exp:r.exp,dias:r.dias,tempo:r.tempo,limit:(r.limit&&r.limit.length?r.limit.join('|'):'nenhum'),rotina:(r.rotina||'').trim(),nomes:{apelido:r.nomes.apelido.trim(),coach:r.nomes.coach.trim()||'Coach'},criado:CZ.hojeISO(),cicloIni:CZ.hojeISO(),tier:r.exp==='zero'?'zero':(r.exp==='meses'?'meses':'pouco')};
  const plano=CZ.criarPlano(perfil);
  ST.setJ('coach_perfil',perfil);ST.setJ('coach_plano',plano);ST.setJ('coach_log',{});
  toast('treino montado! 🥊 bora pro primeiro dia');
@@ -483,7 +484,7 @@ function renderPlano(){
  const c=CZ.ciclo(p);
  let h='<h1>🗺️ Teu treino</h1>';
  h+='<div class="ciclo"><span class="n">🔁</span><div><b>Ciclo '+c.n+' · dia '+c.dia+'/21</b><br><span class="sub" style="margin:0;font-size:12.5px">'+(c.fimProx?'balanço do ciclo chegando! a semana que vem a gente evolui a carga 📈':'carga atual: degrau "'+(pl.tier||'pouco')+'" — reps e segundos da tua altura')+'</span></div></div>';
- h+='<div class="card"><h3>'+((CZ.OBJETIVOS.find(o=>o.id===pl.objetivo)||{}).e||'🥊')+' Objetivo: '+((CZ.OBJETIVOS.find(o=>o.id===pl.objetivo)||{}).n||'—')+'</h3><div class="kv"><span>📍 Local</span><b>'+((CZ.LOCAIS.find(l=>l.id===pl.local)||{}).n||'—')+'</b></div><div class="kv"><span>📊 Versão</span><b>v'+(pl.versao||1)+(pl.nota?(' · '+pl.nota):'')+'</b></div></div>';
+ h+='<div class="card"><h3>'+((CZ.objsDe(pl.objetivo)[0]||{e:'🥊'}).e)+' Objetivo: '+(CZ.objNomes(pl.objetivo)||'—')+'</h3><div class="kv"><span>📍 Local</span><b>'+((CZ.LOCAIS.find(l=>l.id===pl.local)||{}).n||'—')+'</b></div><div class="kv"><span>📊 Versão</span><b>v'+(pl.versao||1)+(pl.nota?(' · '+pl.nota):'')+'</b></div></div>';
  h+='<div class="card"><h3>Semana</h3><table class="pl">'+pl.dias.map(d=>'<tr><td>'+d.dn+'</td><td><b>'+CZ.FOCO_N[d.foco]+'</b><br>'+d.acoes.map(a=>'• '+a.t).join('<br>')+'</td></tr>').join('')+'</table></div>';
  h+='<div class="card"><h3>📏 Regras de casa</h3>'+pl.regras.map(r=>'<p class="sub" style="margin:4px 0">• '+r+'</p>').join('')+'</div>';
  const b=CZ.balanco(log,pl,CZ.hojeISO());
