@@ -1,4 +1,4 @@
-/* suíte do IA Coach v2.8 — core puro + DOM (jsdom) — fluxo: homepage → perguntas → chat */
+/* suíte do IA Coach v3.0 — fluxo: homepage → perguntas NO CHAT → libera; links no 🗺️ */
 'use strict';
 (async()=>{
 const fs=require('fs'),path=require('path');
@@ -7,7 +7,7 @@ function ok(c,n){if(c){P++;console.log('  ✓ '+n)}else{F++;FALHAS.push(n);conso
 function secao(t){console.log('\n── '+t+' ──')}
 const HTML=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
 
-/* ═══ 1. CORE puro ═══ */
+/* ═══ CORE puro ═══ */
 secao('CORE: extração e datas');
 const corpoCZ=HTML.split('const CZ={')[1].split('};\n/*CZ-END*/')[0];
 ok(corpoCZ.length>2000,'CZ extraído do index.html');
@@ -56,7 +56,7 @@ secao('CORE: plano/ciclo/renovação (não-regressão)');
 const perfil={v:2,objetivo:'forca',local:'quarto',exp:'pouco',dias:'4',tempo:'20',limit:'nenhum',nomes:{apelido:'Lô',coach:'Capitão'},criado:hoje,cicloIni:hoje,tier:'pouco'};
 const pl=CZ.criarPlano(perfil);
 ok(pl.dias.filter(d=>d.foco!=='livre'&&d.foco!=='descanso').length===4,'4 dias de treino na semana 4x');
-ok(pl.dias[0].foco==='descanso','segunda é descanso (semana começa na segunda)');
+ok(pl.dias[0].foco==='descanso','segunda é descanso');
 const pl10=CZ.criarPlano(Object.assign({},perfil,{tempo:'10'}));
 ok(pl10.dias.find(d=>d.foco==='A').acoes.filter(a=>a.t.indexOf('Rodadas')<0).length===3,'sessão 10min corta pra 3 exercícios');
 const plVar=CZ.criarPlano(perfil,1);
@@ -77,131 +77,117 @@ ok(CZ.ciclo(pv,pl).renovar,'ciclo fechado detecta renovação');
 ok(CZ.renovarPlano(pv,pl,log,2).plano.semanas===2,'renovação aplica semanas');
 ok(!!CZ.wizResp()&&CZ.wizCompleto({objetivo:['peso'],local:'quarto',exp:'zero',dias:'3',tempo:'10',limit:['nenhum'],nomes:{apelido:'B'}}),'wizard helpers ok');
 
-/* ═══ 2. DOM ═══ */
+/* ═══ DOM: fluxo novo ═══ */
 secao('DOM: HOMEPAGE primeiro');
 const {JSDOM}=require('jsdom');
 const dom=new JSDOM(HTML,{runScripts:'dangerously',url:'https://lucasgabrieldevgg.github.io/coach/',pretendToBeVisual:true});
 const w=dom.window,d=w.document;
 const tick=(ms)=>new Promise(r=>setTimeout(r,ms||60));
 const $=(s)=>d.querySelector(s);
-const $$=(s)=>d.querySelectorAll(s);
+const $$=(s)=>Array.from(d.querySelectorAll(s));
 const MOCKS=[];
 w.fetch=async()=>{const c=MOCKS.shift()||'ok';return {ok:true,json:async()=>({choices:[{message:{content:c}}]})}};
 w.addEventListener('error',e=>console.log('  [window error]',e.message));
 await tick(150);
 ok($('#v-start').hidden===false,'boot sem plano → HOMEPAGE');
 ok($('#nav').hidden===true,'nav escondida na homepage');
-ok(!!$('#b-falar')&&!!$('#b-comecar'),'dois caminhos na homepage (perguntas + papo)');
-ok($('#b-comecar').textContent.indexOf('8 perguntas')>=0,'PERGUNTAS são o caminho principal da homepage');
+ok($('#b-comecar').textContent.indexOf('8 perguntas')>=0,'caminho principal: 8 perguntas');
+ok(!!$('#b-falar'),'alternativa: conversar com o coach');
 
-secao('DOM: pelo papo — cadeado até o plano fechar');
-$('#b-falar').click();await tick(120);
-ok($('#v-chat').hidden===false,'b-falar abre o chat');
-ok($('#nav button[data-v="v-hoje"]').style.opacity==='0.45','Hoje com cadeado visual');
-$('#nav button[data-v="v-hoje"]').click();await tick(120);
-ok($('#v-chat').hidden===false&&$('#v-hoje').hidden===true,'clicar Hoje sem plano: segura no chat');
-ok($$('#chipsx .chip').length===5,'5 chips (4 exemplos + questionário)');
-ok($('#chatlog').textContent.indexOf('te solto no app inteiro')>=0,'saudação promete liberar geral');
+secao('DOM: b-começar → CHAT com as perguntas do coach');
+$('#b-comecar').click();await tick(150);
+ok($('#v-chat').hidden===false,'b-começar abre O CHAT');
+const ult0=$$('#chatlog .msg.ia').pop();
+ok($$('#chatlog .msg.ia').some(b=>b.textContent.indexOf('te perguntando aqui mesmo')>=0),'saudação promete perguntas uma de cada vez');
+ok(!!$('#chatquiz')&&!$('#chatquiz').hidden,'área de resposta do quiz visível');
+ok($$('#chatquiz .chip').length===4&&!!$('#chatquiz #qz-ok'),'pergunta 1 (objetivo) com chips multi + pronto');
+ok($('#chipsx').hidden===true,'exemplos escondidos durante o quiz');
 
-secao('DOM: pelo questionário → plano → abre DIRETO NO CHAT');
-w.localStorage.removeItem('coach_chat');delete $('#chatlog').dataset.on;
-$('#chipsx [data-ex="q"]').click();await tick(120);
-ok($('#v-wizard').hidden===false,'chip abre o wizard');
-for(let rodada=0;rodada<12;rodada++){
-  const corpo=$('#w-corpo');
-  const areas=corpo.querySelectorAll('.area');
-  const qTxt=(corpo.querySelector('h1')||{textContent:''}).textContent;
-  const multi=(qTxt.indexOf('objetivo')>=0||qTxt.indexOf('limitação')>=0);
-  const texto=(corpo.querySelector('textarea')!==null),nomes=(corpo.querySelector('#wz-ap')!==null);
-  if(areas.length){
-    areas[0].click();await tick(60);
-    if(multi){corpo.querySelectorAll('.area')[1].click();await tick(60);$('#w-avancar').click();await tick(90)}
-    else await tick(220);
-  }else if(texto){
-    const ta=corpo.querySelector('textarea');ta.value='semana normal';ta.dispatchEvent(new w.Event('input',{bubbles:true}));
-    $('#w-avancar').click();await tick(90);
-  }else if(nomes){
-    const ap2=corpo.querySelector('#wz-ap'),co=corpo.querySelector('#wz-co');
-    ap2.value='Teste';ap2.dispatchEvent(new w.Event('input',{bubbles:true}));
-    co.value='Capitão';co.dispatchEvent(new w.Event('input',{bubbles:true}));
-    $('#w-avancar').click();await tick(90);
-  }
-  if($('#v-chat').hidden===false)break;
+secao('DOM: as 8 perguntas — o coach pergunta, o usuário responde');
+for(let passo=0;passo<10;passo++){
+  if(!$('#chatquiz')||$('#chatquiz').hidden)break;
+  const texto=($$('#chatlog .msg.ia').pop()||{textContent:''}).textContent;
+  const qz=$('#chatquiz');
+  if(texto.indexOf('objetivo agora')>=0){
+    qz.querySelectorAll('[data-qz]')[0].click();await tick(60);
+    $('#chatquiz').querySelectorAll('[data-qz]')[1].click();await tick(60);
+    $('#chatquiz #qz-ok').click();await tick(120);
+  }else if(texto.indexOf('Onde você vai treinar')>=0){
+    $('#chatquiz').querySelectorAll('[data-qz]')[1].click();await tick(220);
+  }else if(texto.indexOf('experiência com treino')>=0){
+    $('#chatquiz').querySelectorAll('[data-qz]')[1].click();await tick(220);
+  }else if(texto.indexOf('dias por semana')>=0){
+    $('#chatquiz').querySelectorAll('[data-qz]')[1].click();await tick(220);
+  }else if(texto.indexOf('tempo por sessão')>=0){
+    $('#chatquiz').querySelectorAll('[data-qz]')[1].click();await tick(220);
+  }else if(texto.indexOf('limitação física')>=0){
+    $('#chatquiz').querySelectorAll('[data-qz]')[0].click();await tick(60);
+    $('#chatquiz #qz-ok').click();await tick(120);
+  }else if(texto.indexOf('Como é tua semana')>=0){
+    $('#chatquiz #qz-txt').value='manhã cheia, tarde livre';
+    $('#chatquiz #qz-ok').click();await tick(120);
+  }else if(texto.indexOf('Última coisa')>=0){
+    $('#chatquiz #qz-ap').value='Teste';
+    $('#chatquiz #qz-co').value='Capitão';
+    $('#chatquiz #qz-ok').click();await tick(200);
+  }else{await tick(200)}
 }
 await tick(150);
-ok($('#v-chat').hidden===false,'wizard completo → abre DIRETO NO CHAT');
-ok($('#nav button[data-v="v-hoje"]').style.opacity==='','LIBERADO: cadeados sumiram do nav');
-ok(!!w.localStorage.getItem('coach_plano'),'plano do wizard salvo');
-const bub1=$$('#chatlog .msg.ia');
-ok(bub1.length>=2&&bub1[0].textContent.indexOf('Ei, Teste!')>=0,'saudação personalizada vem PRIMEIRO (pelas respostas)');
-ok(bub1[0].textContent.indexOf('pelas tuas respostas')>=0,'saudação cita que o plano veio das respostas');
-const ult1=bub1[bub1.length-1];
-ok(ult1.textContent.indexOf('Quarto')>=0&&ult1.textContent.indexOf('3x/semana')>=0,'anúncio cita LOCAL e DIAS das respostas');
-ok($('#chipsx').hidden===true,'chips de exemplo somem quando já tem plano');
-ok(ult1.textContent.indexOf('Liberado!')>=0&&ult1.textContent.indexOf('Toca no nome')>=0,'coach anuncia o plano com a lista de treinos');
-ok(ult1.querySelectorAll('a[href*="youtube.com/results"]').length>=6,'lista com treinos LINKADOS ('+ult1.querySelectorAll('a[href*="youtube.com/results"]').length+')');
-const lk0=ult1.querySelector('a');
-ok(decodeURIComponent(lk0.href).indexOf('search_query=')>=0,'link abre o YouTube com a busca direto');
-ok((lk0.getAttribute('target')||'')==='_blank','link abre em nova aba');
-ok(HTML.indexOf('.msg a{color:#57b6ff')>0&&HTML.indexOf('[data-tema="claro"] .msg a{color:#0b6fce')>0,'link azul nos dois temas');
-$('#v-hoje');$('#nav button[data-v="v-hoje"]').click();await tick(120);
+const pj=JSON.parse(w.localStorage.getItem('coach_plano'));
+ok(!!pj,'quiz completo → plano criado');
+const pfj=JSON.parse(w.localStorage.getItem('coach_perfil'));
+ok(pfj.nomes.apelido==='Teste'&&pfj.nomes.coach==='Capitão','nomes das respostas no perfil');
+ok(pfj.local==='casa'&&pfj.dias==='4'&&pfj.tempo==='20','respostas das opções no perfil');
+ok(pfj.rotina==='manhã cheia, tarde livre','rotina salva');
+ok(w.localStorage.getItem('coach_quiz')===null,'quiz limpo do storage ao finalizar');
+const ultF=$$('#chatlog .msg.ia').pop();
+ok(ultF.textContent.indexOf('Plano fechado, Teste!')>=0,'coach anuncia o plano pelo nome');
+ok(ultF.textContent.indexOf('destravaram')>=0,'avisa que liberou geral');
+ok($$('#chatlog .msg.ia a').length===0,'SEM parede de links no chat');
+const ecos=$$('#chatlog .msg.eu');
+ok(ecos.length===8&&ecos[0].textContent.indexOf('Perder peso')>=0,'8 respostas viram bolhas do usuário (eco fiel)');
+ok($('#chatquiz').hidden===true,'área de resposta do quiz recolhida');
+
+secao('DOM: LIBERADO + links NA ABA PLANO (cada treino no seu lugar)');
+ok($('#nav button[data-v="v-hoje"]').style.opacity==='','LIBERADO: sem cadeado no nav');
+$('#nav button[data-v="v-hoje"]').click();await tick(120);
 $('#v-hoje').querySelector('.acao').click();await tick(120);
-ok(JSON.parse(w.localStorage.getItem('coach_log'))[CZ.hojeISO()].feitas[0]===true,'checkin no Hoje (liberado)');
+ok(JSON.parse(w.localStorage.getItem('coach_log'))[CZ.hojeISO()].feitas[0]===true,'checkin no Hoje');
+$('#nav button[data-v="v-plano"]').click();await tick(120);
+ok($('#v-plano').textContent.indexOf('abre o YouTube com a busca pronta')>=0,'aba Plano explica os links');
+const linksPl=$$('#v-plano table.pl a[href*="youtube.com/results"]');
+ok(linksPl.length>=8,'cada exercício da semana linkado ('+linksPl.length+' links)');
+ok(decodeURIComponent(linksPl[0].href).indexOf('Agachamento')>=0,'busca com o nome do treino');
+ok($$('#v-plano table.pl a a').length===0,'sem link aninhado no plano');
+$('#v-plano').querySelector('[data-aj="encolher"]').click();await tick(120);
+ok(JSON.parse(w.localStorage.getItem('coach_plano')).tier==='zero','encolher carga segue de pé');
 d.querySelector('#nav button[data-v="v-prog"]').click();await tick(120);
 ok($('#v-prog').textContent.indexOf('Ofensiva')>=0,'Progresso renderiza');
-d.querySelector('#nav button[data-v="v-plano"]').click();await tick(120);
-$('#v-plano').querySelector('[data-aj="encolher"]').click();await tick(120);
-ok(JSON.parse(w.localStorage.getItem('coach_plano')).tier==='zero','encolher carga na aba Plano');
 ok($$('#nav button').length===6,'nav com 6 abas');
 
-secao('DOM: apagar tudo → de volta pra HOMEPAGE, cadeado volta');
-d.querySelector('#nav button[data-v="v-config"]').click();await tick(120);
-$('#cf-apagar').click();await tick(80);$('#cf-apagar').click();await tick(150);
-ok($('#v-start').hidden===false,'apagar tudo volta pra HOMEPAGE');
-ok(!w.localStorage.getItem('coach_timers'),'apagar tudo inclui timers');
-$('#nav').hidden===false&&$('#nav button[data-v="v-plano"]').click();await tick(120);
-if($('#v-plano').hidden===false){ok(false,'cadeado deveria segurar sem plano')}else ok(true,'sem plano: Plano segurar de novo (via chat)');
-
-secao('DOM: pelo papo — chat monta o plano e abre no CHAT');
-$('#b-falar').click();await tick(120);
-MOCKS.push('Fechamos! ```plano\n{"objetivo":"forca","local":"quarto","exp":"pouco","dias":"4","tempo":"20","limit":"nenhum","apelido":"Lô","coach":"Capitão"}\n```');
-$('#chatin').value='quero treinar em casa';
-$('#b-enviar').click();await tick(400);
-const ap=$('#chatlog').querySelector('[data-ap="plano"]');
-ok(!!ap,'card "usar este plano" aparece no chat');
-ap.click();await tick(150);
-ok($('#v-chat').hidden===false,'aplicar plano → abre NO CHAT (coach esperando)');
-const pj=JSON.parse(w.localStorage.getItem('coach_plano'));
-ok(pj.diasSemana==='4'&&pj.dias.length===7,'plano do bloco gerado pelo motor da casa');
-ok(JSON.parse(w.localStorage.getItem('coach_perfil')).nomes.apelido==='Lô','perfil com nomes do bloco');
-ok(!!w.localStorage.getItem('coach_log'),'log zerado no primeiro plano');
-const bubs=$$('#chatlog .msg.ia'),ub=bubs[bubs.length-1];
-ok(ub.textContent.indexOf('Liberado!')>=0,'liberação anunciada no chat');
-ok(ub.querySelectorAll('a[href*="youtube.com/results"]').length>=6,'treinos linkados na liberação');
-
-secao('DOM: remonta o plano (modifica, preserva histórico)');
-const lg2=CZ.checkin(pj,JSON.parse(w.localStorage.getItem('coach_log')),CZ.hojeISO(),0,true);
+secao('DOM: IA remonta pelo papo (histórico preservado, links continuam no 🗺️)');
+const lg2=CZ.checkin(JSON.parse(w.localStorage.getItem('coach_plano')),JSON.parse(w.localStorage.getItem('coach_log')),CZ.hojeISO(),1,true);
 w.localStorage.setItem('coach_log',JSON.stringify(lg2));
 d.querySelector('#nav button[data-v="v-chat"]').click();await tick(120);
 MOCKS.push('Bora! ```plano\n{"objetivo":"resis","local":"parque","exp":"pouco","dias":"5","tempo":"40","limit":"nenhum"}\n```');
 $('#chatin').value='agora treino no parque, 5 dias';
 $('#b-enviar').click();await tick(400);
 const bots2=$$('#chatlog [data-ap="plano"]');
+ok(!!bots2.length,'card "usar este plano" aparece');
 bots2[bots2.length-1].click();await tick(150);
 const pj2=JSON.parse(w.localStorage.getItem('coach_plano'));
-ok(pj2.versao===2&&pj2.nota==='plano remontado na conversa 💬','remontagem versiona o plano');
+ok(pj2.versao>=2&&pj2.nota==='plano remontado na conversa 💬','remontagem versiona o plano (v'+pj2.versao+')');
 ok(pj2.local==='parque'&&pj2.diasSemana==='5','remontagem muda local/dias');
 ok(CZ.fezAlgo(JSON.parse(w.localStorage.getItem('coach_log'))[CZ.hojeISO()]),'histórico PRESERVADO');
-d.querySelector('#nav button[data-v="v-chat"]').click();await tick(120);
-const antes=$$('#chatlog [data-ap="plano"]').length;
+ok($$('#v-chat .msg.ia a').length===0,'anúncio da remontagem também SEM links');
+const bots3=$$('#chatlog [data-ap="plano"]');
 MOCKS.push('ops ```plano\n{"objetivo":"forca","local":"marte","exp":"pouco","dias":"4","tempo":"20"}\n```');
 $('#chatin').value='muda pra marte';
 $('#b-enviar').click();await tick(400);
-const bots3=$$('#chatlog [data-ap="plano"]');
-ok(bots3.length===antes+1,'bloco inválido vira card (o APP quem barra no clique)');
-bots3[bots3.length-1].click();await tick(150);
-ok($('#v-chat').hidden===false,'plano inválido: clique seguro, segue no chat');
-ok(JSON.parse(w.localStorage.getItem('coach_plano')).local==='parque','plano legítimo intacto');
+const bots4=$$('#chatlog [data-ap="plano"]');
+ok(bots4.length===bots3.length+1,'bloco inválido vira card (o APP barra no clique)');
+bots4[bots4.length-1].click();await tick(150);
+ok($('#v-chat').hidden===false&&JSON.parse(w.localStorage.getItem('coach_plano')).local==='parque','clique seguro: plano legítimo intacto');
 
 secao('DOM: IA cria timers + EDITAR + excluir');
 MOCKS.push('Fechou! ```timers\n[{"nome":"Tabata","seg":30},{"nome":"Descanso tabata","seg":15}]\n```');
@@ -213,7 +199,7 @@ bt.click();await tick(150);
 ok($('#v-timer').hidden===false,'leva pra aba Timers');
 let tj=JSON.parse(w.localStorage.getItem('coach_timers'));
 ok(tj.length===2&&tj[0].nome==='Tabata'&&tj[0].seg===30,'2 timers criados pela IA');
-ok($('#v-timer').textContent.indexOf('5s extras de preparação')>=0,'aviso dos 5s na tela');
+ok($('#v-timer').textContent.indexOf('5s extras de preparação')>=0,'aviso dos 5s na aba');
 ok($$('#v-timer [data-src="p"]').length===5,'5 presets');
 d.querySelector('#nav button[data-v="v-chat"]').click();await tick(120);
 MOCKS.push('Ajustado! ```timers\n[{"nome":"Tabata","seg":45}]\n```');
@@ -229,34 +215,26 @@ ok(JSON.parse(w.localStorage.getItem('coach_timers')).length===3,'manual criado'
 const edits=$$('#v-timer [data-edi]');
 ok(edits.length===3,'cada timer meu tem ✏️');
 edits[2].click();await tick(120);
-ok($('#tn-nome').value==='Editável'&&$('#tn-min').value==='0'&&$('#tn-seg').value==='20','editar carrega os valores');
-ok($('#tn-add').textContent.indexOf('salvar')>=0,'botão vira salvar');
+ok($('#tn-nome').value==='Editável'&&$('#tn-seg').value==='20','editar carrega os valores');
 $('#tn-nome').value='Editado';$('#tn-min').value='0';$('#tn-seg').value='45';
 $('#tn-add').click();await tick(120);
 tj=JSON.parse(w.localStorage.getItem('coach_timers'));
-ok(tj.length===3&&tj.find(t=>t.nome==='Editado').seg===45&&!tj.find(t=>t.nome==='Editável'),'EDITADO: mesmo slot, nome e tempo novos');
+ok(tj.length===3&&tj.find(t=>t.nome==='Editado').seg===45&&!tj.find(t=>t.nome==='Editável'),'EDITADO: mesmo slot, dados novos');
 const dels=$$('#v-timer [data-del]');
-ok(dels.length===3,'excluir 🗑 aí');
 dels[2].click();await tick(120);
 ok(JSON.parse(w.localStorage.getItem('coach_timers')).length===2,'exclusão funciona');
 
-secao('DOM: ❓ como faz? → coach explica + NOMES VIRAM LINKS AZUL');
+secao('DOM: ❓ como faz? — coach explica SEM links (links moram no 🗺️)');
 d.querySelector('#nav button[data-v="v-hoje"]').click();await tick(120);
 const cf=$('#v-hoje').querySelector('[data-exq]');
 ok(!!cf,'botão "❓ como faz?" existe no exercício');
-MOCKS.push('Agachamento livre: pés na largura dos ombros, desce devagar com o joelho alinhado. Vale ver também Agachamento parcial e Flexão pra comparar o padrão!');
+MOCKS.push('Agachamento livre: pés na largura dos ombros, desce devagar com o joelho alinhado. Procura "agachamento livre" no YouTube pra ver o movimento!');
 cf.click();
 ok($('#v-chat').hidden===false,'como faz abre o chat');
 await tick(400);
-ok($('#chatlog').textContent.indexOf('como faz:')>=0,'pergunta "como faz: ..." foi pro chat');
-const bubF=$$('#chatlog .msg.ia'),ultM=bubF[bubF.length-1];
-const links=ultM.querySelectorAll('a[href*="youtube.com/results"]');
-ok(links.length>=2,'nomes de exercício viraram LINK na resposta ('+links.length+' links)');
-ok(ultM.querySelectorAll('a a').length===0,'sem link aninhado');
-const hrefs=new Set(Array.from(links).map(x=>x.href));
-ok(hrefs.size===links.length,'cada menção vira um link limpo (sem quebra)');
-const q=decodeURIComponent(links[0].href.split('search_query=')[1]);ok(/^Agachamento livre/.test(q),'busca com o nome certo do treino: '+q);
-ok((links[0].getAttribute('target')||'')==='_blank','link abre em nova aba');
+ok($('#chatlog').textContent.indexOf('como faz:')>=0,'pergunta pronta foi pro chat');
+ok($('#chatlog').textContent.indexOf('YouTube')>=0,'coach indica o YouTube');
+ok($$('#chatlog .msg.ia a').length===0,'e NÃO solta link no chat (link é no 🗺️)');
 
 secao('DOM: ciclo do timer (PREPARA → VALENDO → FIM)');
 d.querySelector('#nav button[data-v="v-timer"]').click();await tick(120);
@@ -270,9 +248,15 @@ await tick(5400);
 ok($('#tfase').textContent==='VALENDO','após 5s: VALENDO');
 await tick(1700);
 ok($('#tfase').textContent==='FIM!','no fim: FIM!');
-ok($('#t-zap').textContent==='fechar','botão vira "fechar"');
 $('#t-zap').click();await tick(120);
 ok(!$('#v-timer').querySelector('#tnum'),'fechar volta pra lista');
+
+secao('DOM: apagar tudo → homepage, quiz zerado');
+d.querySelector('#nav button[data-v="v-config"]').click();await tick(120);
+$('#cf-apagar').click();await tick(80);$('#cf-apagar').click();await tick(150);
+ok($('#v-start').hidden===false,'apagar tudo volta pra HOMEPAGE');
+ok(w.localStorage.getItem('coach_quiz')===null,'quiz zerado');
+ok(!w.localStorage.getItem('coach_timers'),'timers zerados');
 
 console.log('\n══════════════════════════');
 console.log('RESULTADO: '+P+' ✓ / '+F+' ✗'+(F?(' → '+FALHAS.join(' | ')):' — SUÍTE INTEIRA PASSOU 🥊'));

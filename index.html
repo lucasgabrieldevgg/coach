@@ -134,6 +134,7 @@ table.pl td:first-child{font-weight:700;white-space:nowrap}
 <main id="v-chat" hidden>
   <div id="chipsx" class="chips" style="padding:2px 0 10px"></div>
   <div id="chatlog"></div>
+  <div id="chatquiz" hidden style="padding:4px 0 8px"></div>
   <div id="chatbar">
     <textarea id="chatin" rows="1" placeholder="fala com teu coach…"></textarea>
     <button class="btn p" id="b-enviar">➤</button>
@@ -431,7 +432,7 @@ function dnaSistema(){
  'BLOCOS QUE O APP ENTENDE (use EXATAMENTE esse formato; o app mostra o botão — você só conversa):\n'+
  '1) Montar/remontar o PLANO (no começo, ou quando ele pedir mudança de dias/local/objetivo/limitação/tempo): combine pelo papo e mande o plano em texto + o bloco:\n```plano\n{"objetivo":"forca","local":"quarto","exp":"pouco","dias":"4","tempo":"20","limit":"nenhum"}\n```\nvalores possíveis — objetivo: peso|forca|resis|saude (pode combinar com |); local: quarto|casa|parque|academia; exp: zero|pouco|meses; dias: 3|4|5|6; tempo: 10|20|40; limit: nenhum|joelho|costas|outra (pode combinar com |). Explique em texto curto o que escolheu e por quê.\n'+
  '2) Criar TIMERS (relógio): se ele pedir um timer (intervalo, prancha, tabata…), responda + o bloco:\n```timers\n[{"nome":"Tabata","seg":30}]\n```\nnome curto, seg entre 1 e 7200; vários timers podem ir no mesmo bloco. Se já existir timer com o mesmo nome, o app ATUALIZA o tempo (avise ele).\n'+
- '3) COMO FAZER UM EXERCÍCIO: se ele perguntar como se faz (ex: "como faz afundo?"), explica em 2-3 frases com as cues de forma e sugere procurar o NOME do exercício no YouTube pra ver o movimento — você NÃO inventa link nem nome de canal, só recomenda a busca pelo nome. No FINAL da explicação, cita os nomes dos exercícios envolvidos — o app transforma automaticamente os nomes em links azuis que abrem o YouTube com a busca pronta.'+ctx;
+ '3) COMO FAZER UM EXERCÍCIO: se ele perguntar como se faz (ex: "como faz afundo?"), explica em 2-3 frases com as cues de forma e sugere procurar o NOME do exercício no YouTube pra ver o movimento — você NÃO inventa link nem nome de canal, só recomenda a busca pelo nome — no 🗺️ cada exercício da semana JÁ TEM link do YouTube no nome (o app cuida disso, você não manda link).'+ctx;
 }
 
 /* ═══ app (DOM) ═══ */
@@ -444,12 +445,13 @@ function ver(id){
  V=id;['v-start','v-wizard','v-hoje','v-plano','v-chat','v-timer','v-prog','v-config'].forEach(x=>$('#'+x).hidden=x!==id);
  $('#nav').hidden=(id==='v-start'||id==='v-wizard');
  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===id));
- document.querySelectorAll('#nav button').forEach(b=>{const lk=(b.dataset.v==='v-hoje'||b.dataset.v==='v-plano'||b.dataset.v==='v-prog')&&!temPerfil();b.style.opacity=lk?'.45':''});
+ pintaCadeados();
  if(id==='v-hoje')renderHoje();else if(id==='v-plano')renderPlano();else if(id==='v-prog')renderProg();else if(id==='v-config')renderCfg();else if(id==='v-chat')renderChat();else if(id==='v-timer')renderTimer();
  fire();
 }
 function fire(){const st=CZ.streak(ST.getJ('coach_log')||{},CZ.hojeISO());$('#stfire').textContent=st>0?('🔥 '+st):''}
 function temPerfil(){const p=ST.getJ('coach_perfil');return !!p&&p.v===2&&!!ST.getJ('coach_plano')}
+function pintaCadeados(){document.querySelectorAll('#nav button').forEach(b=>{const lk=(b.dataset.v==='v-hoje'||b.dataset.v==='v-plano'||b.dataset.v==='v-prog')&&!temPerfil();b.style.opacity=lk?'.45':''})}
 
 /* ── wizard ── */
 function wizRender(){
@@ -583,7 +585,7 @@ function renderPlano(){
  h+='<div class="ciclo"><span class="n">🔁</span><div><b>Ciclo '+c.n+' · dia '+c.dia+'/'+c.total+'</b><br><span class="sub" style="margin:0;font-size:12.5px">'+(c.fimProx?'balanço do ciclo chegando! a semana que vem a gente evolui a carga 📈':'carga atual: degrau "'+(pl.tier||'pouco')+'" — reps e segundos da tua altura')+'</span></div></div>';
  if(c.renovar)h+='<div class="card" style="border-color:var(--brand)"><h3>🔁 Ciclo fechou! Bora montar a FASE NOVA</h3><p class="sub" style="margin-bottom:8px">Quantas semanas você quer pra se acostumar com o treino novo?</p><div class="chips" id="ren"><button class="chip'+(ps===2?' hot':'')+'" data-sem="2">2 semanas</button><button class="chip'+(ps===3?' hot':'')+'" data-sem="3">3 semanas</button><button class="chip'+(ps===4?' hot':'')+'" data-sem="4">4 semanas</button></div><div class="row"><button class="btn p" id="b-renovar">🔄 Renovar fase (coach decide)</button></div><p class="sub" style="margin:8px 0 0;font-size:12px">O coach ajusta a carga pelo teu balanço e varia o cronograma — Hoje e Plano atualizam na hora. Quer opinião dele antes? Pergunta no 💬 (ele sabe teu ciclo).</p></div>';
  h+='<div class="card"><h3>'+((CZ.objsDe(pl.objetivo)[0]||{e:'🥊'}).e)+' Objetivo: '+(CZ.objNomes(pl.objetivo)||'—')+'</h3><div class="kv"><span>📍 Local</span><b>'+((CZ.LOCAIS.find(l=>l.id===pl.local)||{}).n||'—')+'</b></div><div class="kv"><span>📊 Versão</span><b>v'+(pl.versao||1)+(pl.nota?(' · '+pl.nota):'')+'</b></div></div>';
- h+='<div class="card"><h3>Semana</h3><table class="pl">'+pl.dias.map(d=>'<tr><td>'+d.dn+'</td><td><b>'+CZ.FOCO_N[d.foco]+'</b><br>'+d.acoes.map(a=>'• '+a.t).join('<br>')+'</td></tr>').join('')+'</table></div>';
+ h+='<div class="card"><h3>Semana</h3><p class="sub" style="margin:0 0 8px">toca no nome do treino 🔗 abre o YouTube com a busca pronta</p><table class="pl">'+pl.dias.map(d=>'<tr><td>'+d.dn+'</td><td><b>'+CZ.FOCO_N[d.foco]+'</b><br>'+d.acoes.map(a=>'• '+linkTreinos(esc(a.t))).join('<br>')+'</td></tr>').join('')+'</table></div>';
  h+='<div class="card"><h3>📏 Regras de casa</h3>'+pl.regras.map(r=>'<p class="sub" style="margin:4px 0">• '+r+'</p>').join('')+'</div>';
  const b=CZ.balanco(log,pl,CZ.hojeISO());
  const ce=CZ.condEvoluir(log),cc=CZ.condEncolher(log);
@@ -625,17 +627,19 @@ function renderChat(){
  const hist=ST.getJ('coach_chat')||[];
  if(!hist.length){
   const p=ST.getJ('coach_perfil')||{},nc=(p.nomes&&p.nomes.coach)||'Coach',ap=(p.nomes&&p.nomes.apelido)||'';
-  const sauda=temPerfil()?('Ei, '+ap+'! 🥊 aqui é o '+nc+'. Me conta como o treino tá rolando — e tua semana fora dele também (sono, comida, o que tá apertado) que eu uso isso no teu plano. No que que eu te ajudo?'):('Ei! 🥊 aqui é o '+nc+'. Vou montar teu treino conversando com você: me conta o objetivo, onde você treina, quanto tempo tem por dia, quantos dias por semana e se tem alguma limitação — uma coisa de cada vez tá de bom tamanho. Quando o plano fechar, eu te solto no app inteiro. Pode falar aqui embaixo 👇 (ou clicar num exemplo)');
+  const sauda=temPerfil()?('Ei, '+ap+'! 🥊 aqui é o '+nc+'. Me conta como o treino tá rolando — e tua semana fora dele também (sono, comida, o que tá apertado) que eu uso isso no teu plano. No que que eu te ajudo?'):('Ei! 🥊 aqui é o '+nc+'. Vou montar teu treino te perguntando aqui mesmo, uma coisa de cada vez 👇');
   hist.push({r:'ia',t:sauda});
   ST.setJ('coach_chat',hist);
  }
  pintarChat();
  lg.dataset.on='1';
+ const qz2=ST.getJ('coach_quiz');
+ if(!temPerfil()&&qz2){if(!qz2.feita)quizPergunta();else pintarQuiz()}
  const coarse=(typeof matchMedia==='function')&&matchMedia('(pointer:coarse)').matches;
  if(!coarse)$('#chatin').focus();
 }
 const EXEMLOS=['quero voltar a treinar do zero','tenho só 20 min/dia, treino no quarto','joelho sensível — o que muda?','cria 2 timers: tabata 30s e descanso 15s'];
-function esc(t){return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function esc(t){return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;')}
 function nomesTreinos(){
  if(nomesTreinos.l)return nomesTreinos.l;
  const l=[];
@@ -652,11 +656,11 @@ function linkTreinos(t){
 }
 function montarChips(n){
  const cx=$('#chipsx');if(!cx)return;
- if(n>2||temPerfil()){cx.hidden=true;return}
+ if(n>2||temPerfil()||ST.getJ('coach_quiz')){cx.hidden=true;return}
  cx.hidden=false;
  cx.innerHTML=EXEMLOS.map((e,i)=>'<button class="chip" data-ex="'+i+'">'+e+'</button>').join('')+((!temPerfil())?'<button class="chip" data-ex="q">📝 prefiro o questionário rápido</button>':'');
  cx.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
-  if(c.dataset.ex==='q'){W={etapa:0,resp:CZ.wizResp()};wizRender();ver('v-wizard');return}
+  if(c.dataset.ex==='q'){iniciarQuiz();return}
   $('#chatin').value=EXEMLOS[+c.dataset.ex];enviar();
  });
 }
@@ -680,7 +684,7 @@ function pintarChat(){
  lg.innerHTML=hist.slice(-60).map((x)=>{
   if(x.r==='eu')return '<div class="msg eu">'+esc(x.t)+' <button class="pk" data-t="'+encodeURIComponent(x.t)+'" title="guardar isso sobre você">📌</button></div>';
   const segs=segsDe(x.t);
-  return segs.map(g=>g.tipo==='txt'?('<div class="msg ia">'+linkTreinos(esc(g.d))+'</div>'):cardDeBloco(g)).join('');
+  return segs.map(g=>g.tipo==='txt'?('<div class="msg ia">'+esc(g.d)+'</div>'):cardDeBloco(g)).join('');
  }).join('');
  lg.querySelectorAll('.pk').forEach(b=>b.onclick=()=>{
   const t=decodeURIComponent(b.dataset.t),mem=ST.getJ('coach_mem')||[];
@@ -709,14 +713,86 @@ async function enviar(){
  }
 }
 
+/* ── quiz no chat: o coach pergunta uma coisa de cada vez ── */
+function quizSalva(feita){ST.setJ('coach_quiz',{etapa:W.etapa,resp:W.resp,feita:!!feita})}
+function iniciarQuiz(){
+ QZF=false;
+ W={etapa:0,resp:CZ.wizResp()};
+ ST.setJ('coach_chat',ST.getJ('coach_chat')||[]);
+ quizPergunta();
+}
+function quizPergunta(){
+ const w8=CZ.WIZ[W.etapa];if(!w8){quizFinaliza();return}
+ const hist=ST.getJ('coach_chat')||[];
+ hist.push({r:'ia',t:w8.q+(w8.d?('\n'+w8.d):'')});
+ ST.setJ('coach_chat',hist);
+ quizSalva(true);
+ pintarChat();pintarQuiz();
+}
+function pintarQuiz(){
+ const qz=$('#chatquiz');if(!qz)return;
+ const w8=CZ.WIZ[W.etapa];
+ if(!w8||temPerfil()){qz.hidden=true;qz.innerHTML='';return}
+ qz.hidden=false;
+ if(w8.tipo==='opc'){
+  const sel=W.resp[w8.k]||[];
+  const on=id=>Array.isArray(sel)?(sel.indexOf(id)>=0?' on':''):(sel===id?' on':'');
+  qz.innerHTML='<div class="chips">'+CZ[w8.ops].map(o=>'<button class="chip'+on(o.id)+'" data-qz="'+o.id+'">'+(o.e?o.e+' ':'')+o.n+'</button>').join('')+(w8.multi?'<button class="btn p" id="qz-ok" style="border-radius:999px;padding:8px 16px">pronto ✓</button>':'')+'</div>';
+  qz.querySelectorAll('[data-qz]').forEach(b=>b.onclick=()=>{
+   if(w8.multi){
+    const arr=W.resp[w8.k]=W.resp[w8.k]||[];
+    if(b.dataset.qz==='nenhum'){arr.length=0;arr.push('nenhum')}
+    else{const z=arr.indexOf('nenhum');if(z>=0)arr.splice(z,1);const i=arr.indexOf(b.dataset.qz);if(i>=0)arr.splice(i,1);else arr.push(b.dataset.qz)}
+    pintarQuiz();return;
+   }
+   W.resp[w8.k]=b.dataset.qz;quizAvanca();
+  });
+  const okb=qz.querySelector('#qz-ok');
+  if(okb)okb.onclick=()=>{if(W.resp[w8.k]&&W.resp[w8.k].length)quizAvanca();else toast('escolhe pelo menos uma'+(w8.ops==='LIMITS'?' (ou "Nenhuma")':'')+' 😄')};
+ }else if(w8.tipo==='texto'){
+  qz.innerHTML='<div class="row" style="margin-top:0"><input type="text" id="qz-txt" placeholder="(opcional) escreve aqui…" style="min-height:0;flex:1"><button class="btn p" id="qz-ok">→</button></div>';
+  qz.querySelector('#qz-ok').onclick=()=>{W.resp[w8.k]=qz.querySelector('#qz-txt').value.trim();quizAvanca()};
+ }else if(w8.tipo==='nomes'){
+  qz.innerHTML='<div class="row" style="margin-top:0"><input type="text" id="qz-ap" placeholder="como te chamo?" maxlength="30" style="min-height:0;flex:1;min-width:130px"><input type="text" id="qz-co" placeholder="nome do teu coach" maxlength="30" style="min-height:0;flex:1;min-width:130px"><button class="btn p" id="qz-ok">→</button></div>';
+  qz.querySelector('#qz-ok').onclick=()=>{
+   W.resp.nomes={apelido:qz.querySelector('#qz-ap').value.trim(),coach:qz.querySelector('#qz-co').value.trim()||'Coach'};
+   if(!W.resp.nomes.apelido)return toast('me diz como te chamo 😄 (pode ser apelido)');
+   quizAvanca();
+  };
+ }
+}
+function quizAvanca(){
+ const w8=CZ.WIZ[W.etapa];
+ const hist=ST.getJ('coach_chat')||[];
+ let eco='';
+ if(w8.tipo==='opc'){
+  const v=W.resp[w8.k];
+  eco=Array.isArray(v)?(v.length?v.map(id=>{const o=CZ[w8.ops].find(x=>x.id===id);return (o&&o.n)||id}).join(' + '):'—'):(()=>{const o=CZ[w8.ops].find(x=>x.id===v);return (o&&o.n)||v})();
+ }else if(w8.tipo==='nomes')eco=(W.resp.nomes&&W.resp.nomes.apelido)||'(me chamo assim)';
+ else eco=W.resp[w8.k]||'(pulei essa)';
+ hist.push({r:'eu',t:eco});ST.setJ('coach_chat',hist);
+ if(W.etapa<CZ.WIZ.length-1){W.etapa++;quizSalva(false);quizPergunta();}
+ else quizFinaliza();
+}
+let QZF=false;
+function quizFinaliza(){
+ if(QZF)return;QZF=true;
+ const r=W.resp;
+ const perfil={v:2,objetivo:(r.objetivo||[]).join('|'),local:r.local,exp:r.exp,dias:r.dias,tempo:r.tempo,limit:(r.limit&&r.limit.length?r.limit.join('|'):'nenhum'),rotina:(r.rotina||'').trim(),nomes:{apelido:r.nomes.apelido.trim(),coach:r.nomes.coach.trim()||'Coach'},criado:CZ.hojeISO(),cicloIni:CZ.hojeISO(),tier:r.exp==='zero'?'zero':(r.exp==='meses'?'meses':'pouco')};
+ const plano=CZ.criarPlano(perfil);
+ ST.setJ('coach_perfil',perfil);ST.setJ('coach_plano',plano);ST.setJ('coach_log',{});
+ ST.del('coach_quiz');
+ anunciaPlanoNoChat(plano,true);
+ const qz=$('#chatquiz');if(qz){qz.hidden=true;qz.innerHTML=''}
+ fire();
+}
+
 /* ── chat manda: plano e timers viram coisas do app ── */
 function anunciaPlanoNoChat(pl,primeiro){
- const nomes=[];
- pl.dias.forEach(d=>d.acoes.forEach(x=>{const n=nomesTreinos().find(y=>x.t.indexOf(y.f)>=0);if(n&&!nomes.some(m=>m.f===n.f))nomes.push(n)}));
+ pintaCadeados();
  const hist=ST.getJ('coach_chat')||[];
- const p=ST.getJ('coach_perfil')||{},ap=(p.nomes&&p.nomes.apelido)||'champ',nc=(p.nomes&&p.nomes.coach)||'Coach';
- if(primeiro&&!hist.length)hist.push({r:'ia',t:'Ei, '+ap+'! 🥊 aqui é o '+nc+'. Teu plano fechou pelas tuas respostas — qualquer coisa a gente remonta conversando. Bora pro primeiro dia?'});
- hist.push({r:'ia',t:(primeiro?'Liberado! 🎉 teu plano de '+CZ.objNomes(pl.objetivo)+' no '+((CZ.LOCAIS.find(x=>x.id===pl.local)||{}).n||'teu canto')+' ('+pl.diasSemana+'x/semana) tá no 🗺️ — Hoje, Plano e Progresso destravaram. ':'Plano atualizado! 🗺️ ')+'Quer ver o movimento de cada treino? Toca no nome que abre o YouTube com a busca pronta: '+nomes.map(n=>n.f).join(' · ')});
+ const p=ST.getJ('coach_perfil')||{},ap=(p.nomes&&p.nomes.apelido)||'champ';
+ hist.push({r:'ia',t:(primeiro?('Plano fechado, '+ap+'! 🥊 Hoje, Plano e Progresso destravaram — e no 🗺️ cada exercício tem link do YouTube no nome. Bora pro primeiro dia?'):('Plano atualizado! 🗺️ os treinos já tão lá com link no nome — qualquer ajuste, só falar.'))});
  ST.setJ('coach_chat',hist);
  pintarChat();
 }
@@ -855,7 +931,7 @@ function renderCfg(){
 function aplicarTema(t){if(t==='claro')document.documentElement.setAttribute('data-tema','claro');else document.documentElement.removeAttribute('data-tema');localStorage.setItem('coach_tema',t)}
 
 /* ── binds ── */
-$('#b-comecar').onclick=()=>{W={etapa:0,resp:CZ.wizResp()};wizRender();ver('v-wizard')};
+$('#b-comecar').onclick=()=>{ver('v-chat');iniciarQuiz()};
 $('#w-avancar').onclick=wizAvanca;
 $('#w-voltar').onclick=()=>{if(W.etapa>0){W.etapa--;wizRender()}};
 $('#b-falar').onclick=()=>ver('v-chat');
@@ -868,14 +944,16 @@ $('#cf-nome').oninput=e=>{const p=ST.getJ('coach_perfil')||{};p.nomes=p.nomes||{
 $('#cf-apagar').onclick=()=>{
  const b=$('#cf-apagar');
  if(!ARM){ARM=true;b.textContent='⚠️ tem certeza? apaga TUDO';setTimeout(()=>{ARM=false;b.textContent='Apagar tudo'},4000);return}
- ['coach_perfil','coach_plano','coach_log','coach_chat','coach_uso','coach_mem','coach_timers'].forEach(k=>ST.del(k));
+ ['coach_perfil','coach_plano','coach_log','coach_chat','coach_uso','coach_mem','coach_timers','coach_quiz'].forEach(k=>ST.del(k));
  W={etapa:0,resp:null};ARM=false;b.textContent='Apagar tudo';
  ver('v-start');toast('tudo zerado — quando quiser, bora de novo 👊');
 };
 
 /* ── boot ── */
 aplicarTema(localStorage.getItem('coach_tema')||'escuro');
+const qzS=ST.getJ('coach_quiz');
 if(temPerfil())ver('v-hoje');
+else if(qzS){W={etapa:qzS.etapa,resp:qzS.resp};ver('v-chat')}
 else ver('v-start');
 </script>
 </body>
