@@ -76,6 +76,8 @@ table.pl td:first-child{font-weight:700;white-space:nowrap}
 .msg{max-width:86%;padding:11px 14px;border-radius:15px;font-size:14px;white-space:pre-wrap;word-wrap:break-word}
 .msg.ia{background:var(--bubIA);border:1px solid var(--line);border-bottom-left-radius:5px;align-self:flex-start}
 .msg.eu{background:var(--bub);border-bottom-right-radius:5px;align-self:flex-end}
+.msg a{color:#57b6ff;text-decoration:underline;word-break:break-word}
+[data-tema="claro"] .msg a{color:#0b6fce}
 .pk{background:none;border:0;font-size:11px;opacity:.55;cursor:pointer;margin-left:6px;vertical-align:middle}
 .pk.ok{opacity:1}
 #chatbar{position:static;background:var(--bg2);border-top:1px solid var(--line);padding:10px 0 2px;display:flex;gap:8px}
@@ -429,7 +431,7 @@ function dnaSistema(){
  'BLOCOS QUE O APP ENTENDE (use EXATAMENTE esse formato; o app mostra o botão — você só conversa):\n'+
  '1) Montar/remontar o PLANO (no começo, ou quando ele pedir mudança de dias/local/objetivo/limitação/tempo): combine pelo papo e mande o plano em texto + o bloco:\n```plano\n{"objetivo":"forca","local":"quarto","exp":"pouco","dias":"4","tempo":"20","limit":"nenhum"}\n```\nvalores possíveis — objetivo: peso|forca|resis|saude (pode combinar com |); local: quarto|casa|parque|academia; exp: zero|pouco|meses; dias: 3|4|5|6; tempo: 10|20|40; limit: nenhum|joelho|costas|outra (pode combinar com |). Explique em texto curto o que escolheu e por quê.\n'+
  '2) Criar TIMERS (relógio): se ele pedir um timer (intervalo, prancha, tabata…), responda + o bloco:\n```timers\n[{"nome":"Tabata","seg":30}]\n```\nnome curto, seg entre 1 e 7200; vários timers podem ir no mesmo bloco. Se já existir timer com o mesmo nome, o app ATUALIZA o tempo (avise ele).\n'+
- '3) COMO FAZER UM EXERCÍCIO: se ele perguntar como se faz (ex: "como faz afundo?"), explica em 2-3 frases com as cues de forma e sugere procurar o NOME do exercício no YouTube pra ver o movimento — você NÃO inventa link nem nome de canal, só recomenda a busca pelo nome.'+ctx;
+ '3) COMO FAZER UM EXERCÍCIO: se ele perguntar como se faz (ex: "como faz afundo?"), explica em 2-3 frases com as cues de forma e sugere procurar o NOME do exercício no YouTube pra ver o movimento — você NÃO inventa link nem nome de canal, só recomenda a busca pelo nome. No FINAL da explicação, cita os nomes dos exercícios envolvidos — o app transforma automaticamente os nomes em links azuis que abrem o YouTube com a busca pronta.'+ctx;
 }
 
 /* ═══ app (DOM) ═══ */
@@ -509,8 +511,9 @@ function criarDoWizard(){
  const perfil={v:2,objetivo:(r.objetivo||[]).join('|'),local:r.local,exp:r.exp,dias:r.dias,tempo:r.tempo,limit:(r.limit&&r.limit.length?r.limit.join('|'):'nenhum'),rotina:(r.rotina||'').trim(),nomes:{apelido:r.nomes.apelido.trim(),coach:r.nomes.coach.trim()||'Coach'},criado:CZ.hojeISO(),cicloIni:CZ.hojeISO(),tier:r.exp==='zero'?'zero':(r.exp==='meses'?'meses':'pouco')};
  const plano=CZ.criarPlano(perfil);
  ST.setJ('coach_perfil',perfil);ST.setJ('coach_plano',plano);ST.setJ('coach_log',{});
- toast('treino montado! 🥊 bora pro primeiro dia');
- ver('v-hoje');
+ anunciaPlanoNoChat(plano,true);
+ toast('treino montado! 🥊 o coach te espera no 💬');
+ ver('v-chat');
 }
 
 /* ── hoje ── */
@@ -634,6 +637,20 @@ function renderChat(){
 }
 const EXEMLOS=['quero voltar a treinar do zero','tenho só 20 min/dia, treino no quarto','joelho sensível — o que muda?','cria 2 timers: tabata 30s e descanso 15s'];
 function esc(t){return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function nomesTreinos(){
+ if(nomesTreinos.l)return nomesTreinos.l;
+ const l=[];
+ ['A','B'].forEach(k=>CZ.CIRC[k].forEach(e=>{const m=e.t.match(/^[^(]+/)[0].trim();l.push({f:e.t,q:m});l.push({f:m,q:m})}));
+ Object.keys(CZ.SUBST).forEach(k=>Object.keys(CZ.SUBST[k]).forEach(nome=>{const v=CZ.SUBST[k][nome];const m=v.match(/^[^(]+/)[0].trim();l.push({f:v,q:m});l.push({f:m,q:m})}));
+ nomesTreinos.l=l.sort((a,b)=>b.f.length-a.f.length);
+ return l;
+}
+function linkTreinos(t){
+ const l=nomesTreinos();
+ if(!l.length)return t;
+ const re=new RegExp(l.map(n=>n.f.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|'),'gi');
+ return t.replace(re,m=>{const n=l.find(x=>x.f.toLowerCase()===m.toLowerCase());return '<a href="https://www.youtube.com/results?search_query='+encodeURIComponent(n.q)+'" target="_blank" rel="noopener">'+m+'</a>'});
+}
 function montarChips(n){
  const cx=$('#chipsx');if(!cx)return;
  if(n>2){cx.hidden=true;return}
@@ -663,7 +680,7 @@ function pintarChat(){
  lg.innerHTML=hist.slice(-60).map((x)=>{
   if(x.r==='eu')return '<div class="msg eu">'+esc(x.t)+' <button class="pk" data-t="'+encodeURIComponent(x.t)+'" title="guardar isso sobre você">📌</button></div>';
   const segs=segsDe(x.t);
-  return segs.map(g=>g.tipo==='txt'?('<div class="msg ia">'+esc(g.d)+'</div>'):cardDeBloco(g)).join('');
+  return segs.map(g=>g.tipo==='txt'?('<div class="msg ia">'+linkTreinos(esc(g.d))+'</div>'):cardDeBloco(g)).join('');
  }).join('');
  lg.querySelectorAll('.pk').forEach(b=>b.onclick=()=>{
   const t=decodeURIComponent(b.dataset.t),mem=ST.getJ('coach_mem')||[];
@@ -693,6 +710,14 @@ async function enviar(){
 }
 
 /* ── chat manda: plano e timers viram coisas do app ── */
+function anunciaPlanoNoChat(pl,primeiro){
+ const nomes=[];
+ pl.dias.forEach(d=>d.acoes.forEach(x=>{const n=nomesTreinos().find(y=>x.t.indexOf(y.f)>=0);if(n&&!nomes.some(m=>m.f===n.f))nomes.push(n)}));
+ const hist=ST.getJ('coach_chat')||[];
+ hist.push({r:'ia',t:(primeiro?'Liberado! 🎉 teu plano tá no 🗺️ — Hoje, Plano e Progresso destravaram. ':'Plano atualizado! 🗺️ ')+'Quer ver o movimento de cada treino? Toca no nome que abre o YouTube com a busca pronta: '+nomes.map(n=>n.f).join(' · ')});
+ ST.setJ('coach_chat',hist);
+ pintarChat();
+}
 function aplicarPlanoChat(cod){
  const r=CZ.perfilDoBloco(decodeURIComponent(cod),ST.getJ('coach_perfil'));
  if(!r)return toast('esse plano veio fora do formato — pede pro coach mandar de novo 🙃');
@@ -701,8 +726,9 @@ function aplicarPlanoChat(cod){
  if(!primeiro){p.versao=(antigo.versao||1)+1;p.nota='plano remontado na conversa 💬'}
  ST.setJ('coach_perfil',r.perfil);ST.setJ('coach_plano',p);
  if(primeiro)ST.setJ('coach_log',{});
- toast(primeiro?'plano montado pelo papo! 🥊':'plano atualizado na conversa! 🗺️');
- ver('v-plano');fire();
+ anunciaPlanoNoChat(p,primeiro);
+ toast(primeiro?'plano montado pelo papo! 🥊 o coach tá te esperando aí':'plano atualizado na conversa! 🗺️');
+ ver('v-chat');fire();
 }
 function addTimersChat(cod){
  const ts=CZ.timersDoBloco(decodeURIComponent(cod));
@@ -842,13 +868,13 @@ $('#cf-apagar').onclick=()=>{
  if(!ARM){ARM=true;b.textContent='⚠️ tem certeza? apaga TUDO';setTimeout(()=>{ARM=false;b.textContent='Apagar tudo'},4000);return}
  ['coach_perfil','coach_plano','coach_log','coach_chat','coach_uso','coach_mem','coach_timers'].forEach(k=>ST.del(k));
  W={etapa:0,resp:null};ARM=false;b.textContent='Apagar tudo';
- ver('v-chat');toast('tudo zerado — quando quiser, bora de novo 👊');
+ ver('v-start');toast('tudo zerado — quando quiser, bora de novo 👊');
 };
 
 /* ── boot ── */
 aplicarTema(localStorage.getItem('coach_tema')||'escuro');
 if(temPerfil())ver('v-hoje');
-else ver('v-chat');
+else ver('v-start');
 </script>
 </body>
 </html>
