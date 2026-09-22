@@ -1,0 +1,12 @@
+{
+  "name": "ia-coach",
+  "private": true,
+  "version": "2.6.0",
+  "description": "IA Coach — treino que cabe na tua vida (single-file PWA-ish)",
+  "scripts": {
+    "test": "node tests/coach_test.cjs"
+  },
+  "dependencies": {
+    "jsdom": "^29.1.1"
+  }
+}

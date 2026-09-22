@@ -84,6 +84,16 @@ table.pl td:first-child{font-weight:700;white-space:nowrap}
 .nav button{flex:1;padding:10px 2px 12px;font-size:11px;color:var(--muted);font-weight:600}
 .nav button .i{display:block;font-size:19px;margin-bottom:1px}
 .nav button.on{color:var(--brand)}
+.bigt{font-size:64px;font-weight:800;text-align:center;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1}
+.fase{text-align:center;font-weight:800;letter-spacing:.08em;font-size:13px;margin-bottom:4px;color:var(--muted)}
+.fase.prep{color:var(--hot)}
+.fase.vale{color:var(--ok)}
+.fase.fim{color:var(--brand)}
+.tbar{height:12px;background:var(--bg3);border-radius:99px;overflow:hidden;margin:14px 0}
+.tbar i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--ok));transition:width .25s linear}
+.trow{display:flex;gap:10px;align-items:center;background:var(--bg3);border:1px solid var(--line);border-radius:13px;padding:11px 13px;margin-bottom:8px}
+.trow .nn{flex:1;font-weight:600}
+.trow .ss{color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums}
 .toast{position:fixed;left:50%;bottom:74px;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--line);padding:11px 16px;border-radius:12px;font-size:13.5px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:80;max-width:92vw;text-align:center}
 .toast.on{opacity:1}
 @media(max-width:600px){.grid2{grid-template-columns:1fr 1fr}h1{font-size:20px}}
@@ -102,7 +112,8 @@ table.pl td:first-child{font-weight:700;white-space:nowrap}
   <div class="card"><h3>❓ Pergunta antes de montar</h3><p class="sub" style="margin:0">Objetivo, onde você treina, quanto tempo assume, dias da semana, limitações — o plano nasce do teu contexto, não de modelo pronto.</p></div>
   <div class="card"><h3>💪 Circuito do teu jeito</h3><p class="sub" style="margin:0">Circuitos A e B com repetições por nível, cardio intervalado com teste da frase, e dia de descanso sem culpa (descanso constrói).</p></div>
   <div class="card"><h3>📈 Ciclo de 3 semanas</h3><p class="sub" style="margin:0">Você diz como o treino tá (leve/na medida/pesado) e o coach evolui a carga na hora certa — sobrecarga progressiva, do jeito que não quebra.</p></div>
-  <div class="row"><button class="btn p" id="b-comecar">Montar meu treino 👊</button></div>
+  <div class="row"><button class="btn p" id="b-comecar">Montar meu treino 👊</button><button class="btn g" id="b-falar">💬 Conversar com o coach</button></div>
+  <p class="sub" style="margin-top:10px;font-size:12px">os dois caminhos chegam no mesmo lugar: um plano feito pro teu contexto — no rápido você responde o questionário; no papo o coach pergunta e monta com você.</p>
   <p class="sub" style="margin-top:14px;font-size:12px">Tudo no teu navegador. Sem internet o coach segue com plano e check-in. Equilíbrio sempre: aqui não tem dieta restritiva nem número mágico — saúde séria é com profissional.</p>
 </main>
 
@@ -118,12 +129,14 @@ table.pl td:first-child{font-weight:700;white-space:nowrap}
 <main id="v-hoje" hidden></main>
 <main id="v-plano" hidden></main>
 <main id="v-chat" hidden>
+  <div id="chipsx" class="chips" style="padding:2px 0 10px"></div>
   <div id="chatlog"></div>
   <div id="chatbar">
     <textarea id="chatin" rows="1" placeholder="fala com teu coach…"></textarea>
     <button class="btn p" id="b-enviar">➤</button>
   </div>
 </main>
+<main id="v-timer" hidden></main>
 <main id="v-prog" hidden></main>
 <main id="v-config" hidden>
   <h2>⚙️ Ajustes</h2>
@@ -142,6 +155,7 @@ table.pl td:first-child{font-weight:700;white-space:nowrap}
   <button data-v="v-hoje"><span class="i">📅</span>Hoje</button>
   <button data-v="v-plano"><span class="i">🗺️</span>Plano</button>
   <button data-v="v-chat"><span class="i">💬</span>Coach</button>
+  <button data-v="v-timer"><span class="i">⏱️</span>Timers</button>
   <button data-v="v-prog"><span class="i">📈</span>Progresso</button>
   <button data-v="v-config"><span class="i">⚙️</span>Ajustes</button>
 </nav>
@@ -303,6 +317,44 @@ const CZ={
  msgCheckin(i){const M=['ISSA! ✅ cada marcação aqui é prova, não promessa','bom demais. O segredo não é motivação, é MARCAR e continuar','viu como cabe? O treino que cabe é o que funciona','estímulo destrói, descanso constrói — e constância constrói as duas coisas','Você não tá fazendo "só um pouquinho" — tá fazendo o que a maioria não faz: repetir 👏'];return M[i%M.length]},
  msgFalta(n,apelido){if(n===1)return 'Oi, '+apelido+'! Ontem escapou — de boa, um dia não apaga nada. O que atrapalhou?';if(n===2)return '✋ '+apelido+', dois dias no zero… tô aqui, não tô bravo. O que tá travando?';return 'Ei, '+apelido+', já são '+n+' dias parados. Sem culpa e sem drama: respira, faz a menor ação HOJE e a gente recomeça. O que atrapalhou?'},
  msgBomDia(apelido,st){return st>1?('Bom dia, '+apelido+'! 🔥 ofensiva de '+st+' dia'+(st>1?'s':'')+' — bora manter a corrente'):'Bom dia, '+apelido+'! bora pro treino? o primeiro passo de hoje tá logo aí 👇'},
+ /* ── timers: 5s de preparação, formato e blocos que a IA manda no chat ── */
+ PREP:5,
+ comSeg(s){return Math.max(1,(+s||0))+CZ.PREP},
+ fmtTimer(ms){const t=Math.max(0,Math.ceil(ms/1000));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0')},
+ PLANO_KEYS:{objetivo:['peso','forca','resis','saude'],local:['quarto','casa','parque','academia'],exp:['zero','pouco','meses'],dias:['3','4','5','6'],tempo:['10','20','40'],limit:['nenhum','joelho','costas','outra']},
+ blocoDe(txt,tag){const m=(txt||'').match(new RegExp('```'+tag+'\\s*([\\s\\S]*?)```'));return m?m[1].trim():null},
+ validaPerfil(b){
+  if(!b||typeof b!=='object')return null;
+  const V=CZ.PLANO_KEYS;
+  const pega=(k,multi)=>{let v=b[k];if(v===undefined||v===null)return null;if(multi){const p=String(v).split('|').filter(x=>V[k].indexOf(x)>=0);return p.length?p.join('|'):null}v=String(v);return V[k].indexOf(v)>=0?v:null};
+  const objetivo=pega('objetivo',true),local=pega('local'),exp=pega('exp'),dias=pega('dias'),tempo=pega('tempo'),limit=pega('limit',true)||'nenhum';
+  if(!objetivo||!local||!exp||!dias||!tempo)return null;
+  return {objetivo,local,exp,dias,tempo,limit};
+ },
+ perfilDoBloco(txt,antigo){
+  let raw=null;try{raw=JSON.parse(CZ.blocoDe(txt,'plano')||'null')}catch(e){}
+  const val=CZ.validaPerfil(raw);if(!val)return null;
+  const temNomes=antigo&&antigo.nomes&&antigo.nomes.apelido;
+  const nomes=temNomes?antigo.nomes:{apelido:(raw&&typeof raw.apelido==='string'&&raw.apelido.trim())?raw.apelido.trim().slice(0,30):'champ',coach:(raw&&typeof raw.coach==='string'&&raw.coach.trim())?raw.coach.trim().slice(0,30):'Coach'};
+  const perfil={v:2,objetivo:val.objetivo,local:val.local,exp:val.exp,dias:val.dias,tempo:val.tempo,limit:val.limit,rotina:(antigo&&antigo.rotina)||'',nomes,criado:(antigo&&antigo.criado)||CZ.hojeISO(),cicloIni:CZ.hojeISO(),tier:val.exp==='zero'?'zero':(val.exp==='meses'?'meses':'pouco')};
+  return {perfil,plano:CZ.criarPlano(perfil)};
+ },
+ validaTimer(t){
+  if(!t||typeof t!=='object')return null;
+  const nome=typeof t.nome==='string'?t.nome.trim().slice(0,30):'';
+  let seg=Math.round(+t.seg);
+  if(!isFinite(seg)||seg<=0){if(typeof t.mmss==='string'){const m=t.mmss.match(/^(\d{1,3}):([0-5]\d)$/);if(m)seg=(+m[1])*60+(+m[2])}}
+  if(!nome||!isFinite(seg)||seg<1||seg>7200)return null;
+  return {nome,seg};
+ },
+ timersDoBloco(txt){
+  let raw=null;try{raw=JSON.parse(CZ.blocoDe(txt,'timers')||'null')}catch(e){}
+  if(!Array.isArray(raw))return null;
+  const out=raw.map(CZ.validaTimer).filter(Boolean);
+  return out.length?out:null;
+ },
+ timerUpsert(list,t){const l=(list||[]).filter(x=>x.nome!==t.nome);l.push({nome:t.nome,seg:t.seg});return l},
+ TIM_PRESETS:[{nome:'Descanso curto',seg:30},{nome:'Descanso de série',seg:60},{nome:'Descanso longo',seg:90},{nome:'Prancha',seg:45},{nome:'Cardio rápido',seg:300}],
  /* wizard: 8 perguntas do treino */
  WIZ:[
   {k:'objetivo',q:'Qual é o objetivo agora?',d:'pode marcar mais de um',tipo:'opc',ops:'OBJETIVOS',multi:true},
@@ -361,6 +413,7 @@ function dnaSistema(){
   (limTxt?('\nlimitação: '+limTxt+' (respeitar!)'):'')+
   (p.rotina?('\nrotina: '+p.rotina):'');
  if(pl){const c=CZ.ciclo(p,pl);ctx+='\nplano v'+pl.versao+' (fase '+(pl.variacao||0)+') · carga: degrau "'+pl.tier+'" · ciclo de '+(+p.cicloSemanas||3)+' semanas, agora no ciclo '+c.n+', dia '+c.dia+'/'+c.total+' · semana: '+pl.dias.map(d=>d.dn+': '+d.foco).join(' · ')+(c.renovar?' · O CICLO FECHOU: converse sobre a próxima fase (quantas semanas ele quer pra se acostumar) e lembre ele de renovar no 🗺️':'');}
+ if(!pl)ctx+='\nNÃO HÁ PLANO ainda: descubra o contexto conversando (objetivo, onde treina, quanto tempo, quantos dias, limitações — UMA pergunta por vez) e, quando tiver o essencial, mande o bloco plano pra o app montar. NÃO mande o bloco antes de saber o básico.';
  const st=CZ.streak(ST.getJ('coach_log')||{},CZ.hojeISO());
  const fb=CZ.feedbacks(ST.getJ('coach_log')||{});
  ctx+='\nofensiva: '+st+' dia(s)'+(fb.length?('\núltimos treinos (pra ele mesmo): '+fb.join(', ')):'');
@@ -371,7 +424,10 @@ function dnaSistema(){
  'MÉTODO: alterna dia intenso e dia leve; circuito no local dele com rodadas (a extra só se estiver super bem); cardio intervalado com o teste da frase (no ritmo forte dá pra falar, mas não cantar); forma antes de repetição; sobrecarga progressiva por degraus a cada ciclo de ~3 semanas, quando a adesão tá boa OU dois treinos seguidos vieram "leves"; descanso é parte do treino (estímulo destrói, descanso constrói).\n'+
  'CIÊNCIA (honesto, SEM inventar número ou estudo): teste da fala pra intensidade; sobrecarga progressiva; sono e proteína ajudam na recuperação; água; consistência vence intensidade; cues de forma (joelho alinha com o pé, lombar apoiada na prancha, descer com controle). Se não souber, diz que não sabe.\n'+
  'LIMITES (IMPORTANTES): o usuário pode ser menor de idade — NUNCA prescreva dieta restritiva, déficit calórico agressivo, suplemento, meta de peso agressiva ou prometa resultado de peso em X tempo. Foco: equilíbrio, força, energia, sono e autoestima. Peso e corpo como assunto sério → profissional de saúde/nutricionista. Dor aguda = parar; dor persistente = procurar profissional. Sinal de sofrimento real (tristeza profunda, desesperança) → acolher e sugerir falar com um adulto de confiança (CVV 188 se grave). Nada 18+.\n'+
- 'CURIOSIDADE ATIVA: ainda não sabe a rotina dele (sono, comida, energia, horários livres)? Pergunte UMA coisa por vez nas primeiras mensagens e adapte o treino com o que ouvir. Quando ele contar algo importante, lembre do 📌 na mensagem dele (o app guarda pra você).\nFORMATO: 2-6 frases, uma pergunta por vez, sem parede de texto. Pode sugerir ajuste de treino em texto; os botões de aplicar são do app.'+ctx;
+ 'CURIOSIDADE ATIVA: ainda não sabe a rotina dele (sono, comida, energia, horários livres)? Pergunte UMA coisa por vez nas primeiras mensagens e adapte o treino com o que ouvir. Quando ele contar algo importante, lembre do 📌 na mensagem dele (o app guarda pra você).\nFORMATO: 2-6 frases, uma pergunta por vez, sem parede de texto. Pode sugerir ajuste de treino em texto; os botões de aplicar são do app.\n'+
+ 'BLOCOS QUE O APP ENTENDE (use EXATAMENTE esse formato; o app mostra o botão — você só conversa):\n'+
+ '1) Montar/remontar o PLANO (no começo, ou quando ele pedir mudança de dias/local/objetivo/limitação/tempo): combine pelo papo e mande o plano em texto + o bloco:\n```plano\n{"objetivo":"forca","local":"quarto","exp":"pouco","dias":"4","tempo":"20","limit":"nenhum"}\n```\nvalores possíveis — objetivo: peso|forca|resis|saude (pode combinar com |); local: quarto|casa|parque|academia; exp: zero|pouco|meses; dias: 3|4|5|6; tempo: 10|20|40; limit: nenhum|joelho|costas|outra (pode combinar com |). Explique em texto curto o que escolheu e por quê.\n'+
+ '2) Criar TIMERS (relógio): se ele pedir um timer (intervalo, prancha, tabata…), responda + o bloco:\n```timers\n[{"nome":"Tabata","seg":30}]\n```\nnome curto, seg entre 1 e 7200; vários timers podem ir no mesmo bloco. Se já existir timer com o mesmo nome, o app ATUALIZA o tempo (avise ele).'+ctx;
 }
 
 /* ═══ app (DOM) ═══ */
@@ -380,10 +436,10 @@ const ST={getJ(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),3400)}
 let V='v-start',W={etapa:0,resp:null},ARM=false;
 function ver(id){
- V=id;['v-start','v-wizard','v-hoje','v-plano','v-chat','v-prog','v-config'].forEach(x=>$('#'+x).hidden=x!==id);
+ V=id;['v-start','v-wizard','v-hoje','v-plano','v-chat','v-timer','v-prog','v-config'].forEach(x=>$('#'+x).hidden=x!==id);
  $('#nav').hidden=(id==='v-start'||id==='v-wizard');
  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===id));
- if(id==='v-hoje')renderHoje();else if(id==='v-plano')renderPlano();else if(id==='v-prog')renderProg();else if(id==='v-config')renderCfg();else if(id==='v-chat')renderChat();
+ if(id==='v-hoje')renderHoje();else if(id==='v-plano')renderPlano();else if(id==='v-prog')renderProg();else if(id==='v-config')renderCfg();else if(id==='v-chat')renderChat();else if(id==='v-timer')renderTimer();
  fire();
 }
 function fire(){const st=CZ.streak(ST.getJ('coach_log')||{},CZ.hojeISO());$('#stfire').textContent=st>0?('🔥 '+st):''}
@@ -564,20 +620,49 @@ function renderChat(){
   hist.push({r:'ia',t:'Ei, '+ap+'! 🥊 aqui é o '+nc+'. Me conta como o treino tá rolando — e tua semana fora dele também (sono, comida, o que tá apertado) que eu uso isso no teu plano. No que que eu te ajudo?'});
   ST.setJ('coach_chat',hist);
  }
+ montarChips(hist.length);
  pintarChat();
  lg.dataset.on='1';
  const coarse=(typeof matchMedia==='function')&&matchMedia('(pointer:coarse)').matches;
  if(!coarse)$('#chatin').focus();
 }
+const EXEMLOS=['quero voltar a treinar do zero','tenho só 20 min/dia, treino no quarto','joelho sensível — o que muda?','cria 2 timers: tabata 30s e descanso 15s'];
+function esc(t){return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function montarChips(n){
+ const cx=$('#chipsx');if(!cx)return;
+ if(n>2){cx.hidden=true;return}
+ cx.hidden=false;
+ cx.innerHTML=EXEMLOS.map((e,i)=>'<button class="chip" data-ex="'+i+'">'+e+'</button>').join('');
+ cx.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{$('#chatin').value=EXEMLOS[+c.dataset.ex];enviar()});
+}
+function segsDe(t){
+ const segs=[];let m,idx=0;const re=/```(plano|timers)\s*([\s\S]*?)```/g;
+ while((m=re.exec(t||''))){
+  if(m.index>idx)segs.push({tipo:'txt',d:t.slice(idx,m.index)});
+  segs.push({tipo:m[1],d:m[2].trim()});idx=m.index+m[0].length;
+ }
+ if(idx<(t||'').length)segs.push({tipo:'txt',d:t.slice(idx)});
+ return segs;
+}
+function cardDeBloco(g){
+ const cercado='```'+g.tipo+'\n'+g.d+'\n```';
+ if(g.tipo==='plano')return '<div class="card" style="margin-bottom:0"><h3>📋 plano conversado</h3><p class="sub" style="margin:0 0 10px">o coach resumiu teu contexto — o app monta a semana com o método da casa. Quer mudar algo antes? Pede no papo.</p><button class="btn p" data-ap="plano" data-cod="'+encodeURIComponent(cercado)+'">✅ usar este plano</button></div>';
+ return '<div class="card" style="margin-bottom:0"><h3>⏱️ timers do coach</h3><p class="sub" style="margin:0 0 10px">vão pro teu relógio — cada um começa com 5s de preparação</p><button class="btn p" data-ap="timers" data-cod="'+encodeURIComponent(cercado)+'">⏱️ adicionar ao relógio</button></div>';
+}
 function pintarChat(){
  const hist=ST.getJ('coach_chat')||[],lg=$('#chatlog');
- lg.innerHTML=hist.slice(-60).map(x=>'<div class="msg '+(x.r==='ia'?'ia':'eu')+'">'+x.t.replace(/&/g,'&amp;').replace(/</g,'&lt;')+(x.r==='eu'?' <button class="pk" data-t="'+encodeURIComponent(x.t)+'" title="guardar isso sobre você">📌</button>':'')+'</div>').join('');
+ lg.innerHTML=hist.slice(-60).map((x)=>{
+  if(x.r==='eu')return '<div class="msg eu">'+esc(x.t)+' <button class="pk" data-t="'+encodeURIComponent(x.t)+'" title="guardar isso sobre você">📌</button></div>';
+  const segs=segsDe(x.t);
+  return segs.map(g=>g.tipo==='txt'?('<div class="msg ia">'+esc(g.d)+'</div>'):cardDeBloco(g)).join('');
+ }).join('');
  lg.querySelectorAll('.pk').forEach(b=>b.onclick=()=>{
   const t=decodeURIComponent(b.dataset.t),mem=ST.getJ('coach_mem')||[];
   if(mem.some(x=>x.t===t))return;
   mem.push({t,dia:CZ.hojeISO()});ST.setJ('coach_mem',mem.slice(-30));
   toast('guardado! o coach lembra disso 💭');b.textContent='✓';b.classList.add('ok');
  });
+ lg.querySelectorAll('[data-ap]').forEach(b=>b.onclick=()=>{b.dataset.ap==='plano'?aplicarPlanoChat(b.dataset.cod):addTimersChat(b.dataset.cod)});
  lg.scrollTop=lg.scrollHeight;
 }
 async function enviar(){
@@ -596,6 +681,95 @@ async function enviar(){
   hist[hist.length-1]={r:'ia',t:'⚠️ '+e.message};
   ST.setJ('coach_chat',hist);pintarChat();
  }
+}
+
+/* ── chat manda: plano e timers viram coisas do app ── */
+function aplicarPlanoChat(cod){
+ const r=CZ.perfilDoBloco(decodeURIComponent(cod),ST.getJ('coach_perfil'));
+ if(!r)return toast('esse plano veio fora do formato — pede pro coach mandar de novo 🙃');
+ const antigo=ST.getJ('coach_plano'),primeiro=!antigo;
+ const p=r.plano;
+ if(!primeiro){p.versao=(antigo.versao||1)+1;p.nota='plano remontado na conversa 💬'}
+ ST.setJ('coach_perfil',r.perfil);ST.setJ('coach_plano',p);
+ if(primeiro)ST.setJ('coach_log',{});
+ toast(primeiro?'plano montado pelo papo! 🥊':'plano atualizado na conversa! 🗺️');
+ ver('v-plano');fire();
+}
+function addTimersChat(cod){
+ const ts=CZ.timersDoBloco(decodeURIComponent(cod));
+ if(!ts)return toast('os timers vieram estranhos — pede de novo pro coach ⏱️');
+ let l=ST.getJ('coach_timers')||[];
+ ts.forEach(t=>{l=CZ.timerUpsert(l,t)});
+ ST.setJ('coach_timers',l);
+ toast(ts.length+' timer'+(ts.length>1?'s':'')+' no relógio ⏱️ (com 5s de preparação)');
+ ver('v-timer');
+}
+
+/* ── timers: sempre 5s de preparação antes do tempo pedido ── */
+let TM={at:null,h:null};
+function beep(f,d){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const a=new C(),o=a.createOscillator(),g=a.createGain();o.frequency.value=f;o.connect(g);g.connect(a.destination);g.gain.value=.12;o.start();o.stop(a.currentTime+(d||.12))}catch(e){}}
+function timerListaHTML(){
+ let h='<h1>⏱️ Timers</h1>';
+ h+='<div class="coachfala"><b>como funciona:</b> todo timer começa com <b>5s extras de preparação</b> — você se posiciona, e o tempo que você pediu só começa a contar depois. Aviso na tela e bipe quando valer.</div>';
+ h+='<div class="card"><h3>prontos</h3>'+CZ.TIM_PRESETS.map((t,i)=>'<div class="trow"><div class="nn">'+esc(t.nome)+'</div><div class="ss">'+CZ.fmtTimer(t.seg*1000)+'</div><button class="btn g" data-ti="'+i+'" data-src="p">▶</button></div>').join('')+'</div>';
+ const meus=ST.getJ('coach_timers')||[];
+ h+='<div class="card"><h3>meus timers</h3>'+(meus.length?meus.map((t,i)=>'<div class="trow"><div class="nn">'+esc(t.nome)+'</div><div class="ss">'+CZ.fmtTimer(t.seg*1000)+'</div><button class="btn g" data-ti="'+i+'" data-src="m">▶</button><button class="btn d" data-del="'+i+'" style="padding:6px 10px">🗑</button></div>').join(''):'<p class="sub" style="margin:0 0 10px">nenhum ainda — cria aí embaixo ou pede no 💬 ("cria um timer de tabata")</p>')+
+ '<div class="row" style="margin-top:10px"><input type="text" id="tn-nome" placeholder="nome (ex: Tabata)" maxlength="30" style="min-height:0;flex:1;min-width:120px"><input type="number" id="tn-min" min="0" max="120" placeholder="min" style="min-height:0;width:72px"><input type="number" id="tn-seg" min="0" max="59" placeholder="seg" style="min-height:0;width:72px"><button class="btn p" id="tn-add">+</button></div></div>';
+ h+='<p class="sub" style="font-size:12px">os prontos sempre ficam; os teus ficam salvos no aparelho.</p>';
+ return h;
+}
+function timerAtivoHTML(){
+ return '<div class="card" style="text-align:center"><div class="fase" id="tfase">PREPARA…</div><div class="bigt" id="tnum">0:05</div><div class="tbar"><i id="tbar" style="width:0%"></i></div><p class="sub" id="tinfo" style="margin:0">'+esc(TM.at.nome)+' · '+CZ.fmtTimer(TM.at.seg*1000)+' valendo (5s de preparação antes)</p><div class="row" style="justify-content:center"><button class="btn g" id="t-zap">parar</button></div></div>';
+}
+function renderTimer(){
+ const m=$('#v-timer');
+ if(TM.at){m.innerHTML=timerAtivoHTML();const z=$('#t-zap');if(z)z.onclick=timerPara;pintarTick();return}
+ if(TM.h){clearInterval(TM.h);TM.h=null}
+ m.innerHTML=timerListaHTML();
+ m.querySelectorAll('[data-ti]').forEach(b=>b.onclick=()=>{
+  const t=b.dataset.src==='p'?CZ.TIM_PRESETS[+b.dataset.ti]:(ST.getJ('coach_timers')||[])[+b.dataset.ti];
+  if(t)timerInicia(t.nome,t.seg);
+ });
+ m.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+  const l=ST.getJ('coach_timers')||[];l.splice(+b.dataset.del,1);ST.setJ('coach_timers',l);renderTimer();
+ });
+ const add=m.querySelector('#tn-add');
+ if(add)add.onclick=()=>{
+  const n=$('#tn-nome').value.trim(),mi=+$('#tn-min').value||0,se=+$('#tn-seg').value||0;
+  const v=CZ.validaTimer({nome:n,seg:mi*60+se});
+  if(!v)return toast('nome + tempo (até 120:59) aí 😄');
+  ST.setJ('coach_timers',CZ.timerUpsert(ST.getJ('coach_timers')||[],v));
+  toast('timer salvo ⏱️ começa com 5s de preparação');renderTimer();
+ };
+}
+function timerInicia(nome,seg){
+ beep(880,.09);
+ TM.at={nome,seg,total:CZ.comSeg(seg)*1000,prepFim:Date.now()+CZ.PREP*1000,fim:Date.now()+CZ.comSeg(seg)*1000,fasev:''};
+ renderTimer();
+ if(!TM.h)TM.h=setInterval(tickTimer,250);
+ tickTimer();
+}
+function timerPara(){if(TM.h){clearInterval(TM.h);TM.h=null}TM.at=null;renderTimer()}
+function pintarTick(){
+ const at=TM.at;if(!at||!$('#tnum'))return;
+ const now=Date.now();let fase,resto,cls;
+ if(now<at.prepFim){fase='PREPARA…';resto=at.prepFim-now;cls='prep'}
+ else if(now<at.fim){fase='VALENDO';resto=at.fim-now;cls='vale'}
+ else{fase='FIM!';resto=0;cls='fim'}
+ $('#tfase').className='fase '+cls;
+ $('#tfase').textContent=fase;
+ $('#tnum').textContent=CZ.fmtTimer(resto);
+ $('#tbar').style.width=Math.round(Math.min(100,Math.max(0,(1-resto/at.total)*100)))+'%';
+ if(fase!==at.fasev){
+  at.fasev=fase;
+  if(fase==='VALENDO')beep(1100,.12);
+  if(fase==='FIM!'){beep(1300,.14);setTimeout(()=>beep(1300,.14),220);setTimeout(()=>beep(1300,.2),460);const z=$('#t-zap');if(z){z.textContent='fechar'}const inf=$('#tinfo');if(inf)inf.textContent=at.nome+' — fechou! 🔥'}
+ }
+}
+function tickTimer(){
+ if(!TM.at)return;
+ pintarTick();
+ if(Date.now()>=TM.at.fim&&TM.h){clearInterval(TM.h);TM.h=null}
 }
 
 /* ── progresso ── */
@@ -635,6 +809,7 @@ function aplicarTema(t){if(t==='claro')document.documentElement.setAttribute('da
 $('#b-comecar').onclick=()=>{W={etapa:0,resp:CZ.wizResp()};wizRender();ver('v-wizard')};
 $('#w-avancar').onclick=wizAvanca;
 $('#w-voltar').onclick=()=>{if(W.etapa>0){W.etapa--;wizRender()}};
+$('#b-falar').onclick=()=>ver('v-chat');
 $('#b-enviar').onclick=enviar;
 $('#chatin').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviar()}});
 document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>ver(b.dataset.v));
@@ -644,7 +819,7 @@ $('#cf-nome').oninput=e=>{const p=ST.getJ('coach_perfil')||{};p.nomes=p.nomes||{
 $('#cf-apagar').onclick=()=>{
  const b=$('#cf-apagar');
  if(!ARM){ARM=true;b.textContent='⚠️ tem certeza? apaga TUDO';setTimeout(()=>{ARM=false;b.textContent='Apagar tudo'},4000);return}
- ['coach_perfil','coach_plano','coach_log','coach_chat','coach_uso','coach_mem'].forEach(k=>ST.del(k));
+ ['coach_perfil','coach_plano','coach_log','coach_chat','coach_uso','coach_mem','coach_timers'].forEach(k=>ST.del(k));
  W={etapa:0,resp:null};ARM=false;b.textContent='Apagar tudo';
  ver('v-start');toast('tudo zerado — quando quiser, bora de novo 👊');
 };
