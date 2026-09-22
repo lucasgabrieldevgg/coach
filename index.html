@@ -428,7 +428,7 @@ function dnaSistema(){
  'MÉTODO: alterna dia intenso e dia leve; circuito no local dele com rodadas (a extra só se estiver super bem); cardio intervalado com o teste da frase (no ritmo forte dá pra falar, mas não cantar); forma antes de repetição; sobrecarga progressiva por degraus a cada ciclo de ~3 semanas, quando a adesão tá boa OU dois treinos seguidos vieram "leves"; descanso é parte do treino (estímulo destrói, descanso constrói).\n'+
  'CIÊNCIA (honesto, SEM inventar número ou estudo): teste da fala pra intensidade; sobrecarga progressiva; sono e proteína ajudam na recuperação; água; consistência vence intensidade; cues de forma (joelho alinha com o pé, lombar apoiada na prancha, descer com controle). Se não souber, diz que não sabe.\n'+
  'LIMITES (IMPORTANTES): o usuário pode ser menor de idade — NUNCA prescreva dieta restritiva, déficit calórico agressivo, suplemento, meta de peso agressiva ou prometa resultado de peso em X tempo. Foco: equilíbrio, força, energia, sono e autoestima. Peso e corpo como assunto sério → profissional de saúde/nutricionista. Dor aguda = parar; dor persistente = procurar profissional. Sinal de sofrimento real (tristeza profunda, desesperança) → acolher e sugerir falar com um adulto de confiança (CVV 188 se grave). Nada 18+.\n'+
- 'CURIOSIDADE ATIVA: ainda não sabe a rotina dele (sono, comida, energia, horários livres)? Pergunte UMA coisa por vez nas primeiras mensagens e adapte o treino com o que ouvir. Quando ele contar algo importante, lembre do 📌 na mensagem dele (o app guarda pra você).\nFORMATO: 2-6 frases, uma pergunta por vez, sem parede de texto. Pode sugerir ajuste de treino em texto; os botões de aplicar são do app.\n'+
+ 'CURIOSIDADE ATIVA: ele já respondeu o questionário inicial — mas AGORA é tua vez de aprofundar no chat: sono, comida, energia, horários livres, o que aperta. Pergunte UMA coisa por vez nas primeiras mensagens e adapte o treino com o que ouvir. Quando ele contar algo importante, lembre do 📌 na mensagem dele (o app guarda pra você).\nFORMATO: 2-6 frases, uma pergunta por vez, sem parede de texto. Pode sugerir ajuste de treino em texto; os botões de aplicar são do app.\n'+
  'BLOCOS QUE O APP ENTENDE (use EXATAMENTE esse formato; o app mostra o botão — você só conversa):\n'+
  '1) Montar/remontar o PLANO (no começo, ou quando ele pedir mudança de dias/local/objetivo/limitação/tempo): combine pelo papo e mande o plano em texto + o bloco:\n```plano\n{"objetivo":"forca","local":"quarto","exp":"pouco","dias":"4","tempo":"20","limit":"nenhum"}\n```\nvalores possíveis — objetivo: peso|forca|resis|saude (pode combinar com |); local: quarto|casa|parque|academia; exp: zero|pouco|meses; dias: 3|4|5|6; tempo: 10|20|40; limit: nenhum|joelho|costas|outra (pode combinar com |). Explique em texto curto o que escolheu e por quê.\n'+
  '2) Criar TIMERS (relógio): se ele pedir um timer (intervalo, prancha, tabata…), responda + o bloco:\n```timers\n[{"nome":"Tabata","seg":30}]\n```\nnome curto, seg entre 1 e 7200; vários timers podem ir no mesmo bloco. Se já existir timer com o mesmo nome, o app ATUALIZA o tempo (avise ele).\n'+
@@ -627,14 +627,12 @@ function renderChat(){
  const hist=ST.getJ('coach_chat')||[];
  if(!hist.length){
   const p=ST.getJ('coach_perfil')||{},nc=(p.nomes&&p.nomes.coach)||'Coach',ap=(p.nomes&&p.nomes.apelido)||'';
-  const sauda=temPerfil()?('Ei, '+ap+'! 🥊 aqui é o '+nc+'. Me conta como o treino tá rolando — e tua semana fora dele também (sono, comida, o que tá apertado) que eu uso isso no teu plano. No que que eu te ajudo?'):('Ei! 🥊 aqui é o '+nc+'. Vou montar teu treino te perguntando aqui mesmo, uma coisa de cada vez 👇');
+  const sauda=temPerfil()?('Ei, '+ap+'! 🥊 aqui é o '+nc+'. Me conta como o treino tá rolando — e tua semana fora dele também (sono, comida, o que tá apertado) que eu uso isso no teu plano. No que que eu te ajudo?'):('Ei! 🥊 aqui é o '+nc+'. Pra eu MONTAR teu plano, usa o botão "Começar: 8 perguntas" na homepage (←) — aqui a gente conversa e eu já vou te conhecendo. No que quer começar?');
   hist.push({r:'ia',t:sauda});
   ST.setJ('coach_chat',hist);
  }
  pintarChat();
  lg.dataset.on='1';
- const qz2=ST.getJ('coach_quiz');
- if(!temPerfil()&&qz2){if(!qz2.feita)quizPergunta();else pintarQuiz()}
  const coarse=(typeof matchMedia==='function')&&matchMedia('(pointer:coarse)').matches;
  if(!coarse)$('#chatin').focus();
 }
@@ -658,9 +656,9 @@ function montarChips(n){
  const cx=$('#chipsx');if(!cx)return;
  if(n>2||temPerfil()||ST.getJ('coach_quiz')){cx.hidden=true;return}
  cx.hidden=false;
- cx.innerHTML=EXEMLOS.map((e,i)=>'<button class="chip" data-ex="'+i+'">'+e+'</button>').join('')+((!temPerfil())?'<button class="chip" data-ex="q">📝 prefiro o questionário rápido</button>':'');
+ cx.innerHTML=EXEMLOS.map((e,i)=>'<button class="chip" data-ex="'+i+'">'+e+'</button>').join('')+((!temPerfil())?'<button class="chip" data-ex="q">📝 questionário rápido</button>':'');
  cx.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
-  if(c.dataset.ex==='q'){iniciarQuiz();return}
+  if(c.dataset.ex==='q'){W={etapa:0,resp:CZ.wizResp()};wizRender();ver('v-wizard');return}
   $('#chatin').value=EXEMLOS[+c.dataset.ex];enviar();
  });
 }
@@ -792,7 +790,10 @@ function anunciaPlanoNoChat(pl,primeiro){
  pintaCadeados();
  const hist=ST.getJ('coach_chat')||[];
  const p=ST.getJ('coach_perfil')||{},ap=(p.nomes&&p.nomes.apelido)||'champ';
- hist.push({r:'ia',t:(primeiro?('Plano fechado, '+ap+'! 🥊 Hoje, Plano e Progresso destravaram — e no 🗺️ cada exercício tem link do YouTube no nome. Bora pro primeiro dia?'):('Plano atualizado! 🗺️ os treinos já tão lá com link no nome — qualquer ajuste, só falar.'))});
+ if(primeiro){
+  hist.push({r:'ia',t:'Plano fechado, '+ap+'! 🥊 teu plano tá no 🗺️ com a semana inteira — e cada treino tem link do YouTube no nome. Hoje, Plano e Progresso destravaram.'});
+  hist.push({r:'ia',t:'Agora me conta UMA coisa pra eu calibrar teu plano: como tá teu sono — e quais horários costumam sobrar na tua semana?'});
+ }else hist.push({r:'ia',t:'Plano atualizado! 🗺️ os treinos já tão lá com link no nome — qualquer ajuste, só falar.'});
  ST.setJ('coach_chat',hist);
  pintarChat();
 }
@@ -931,7 +932,7 @@ function renderCfg(){
 function aplicarTema(t){if(t==='claro')document.documentElement.setAttribute('data-tema','claro');else document.documentElement.removeAttribute('data-tema');localStorage.setItem('coach_tema',t)}
 
 /* ── binds ── */
-$('#b-comecar').onclick=()=>{ver('v-chat');iniciarQuiz()};
+$('#b-comecar').onclick=()=>{W={etapa:0,resp:CZ.wizResp()};wizRender();ver('v-wizard')};
 $('#w-avancar').onclick=wizAvanca;
 $('#w-voltar').onclick=()=>{if(W.etapa>0){W.etapa--;wizRender()}};
 $('#b-falar').onclick=()=>ver('v-chat');
@@ -945,6 +946,7 @@ $('#cf-apagar').onclick=()=>{
  const b=$('#cf-apagar');
  if(!ARM){ARM=true;b.textContent='⚠️ tem certeza? apaga TUDO';setTimeout(()=>{ARM=false;b.textContent='Apagar tudo'},4000);return}
  ['coach_perfil','coach_plano','coach_log','coach_chat','coach_uso','coach_mem','coach_timers','coach_quiz'].forEach(k=>ST.del(k));
+ $('#chatlog').innerHTML='';delete $('#chatlog').dataset.on;$('#chipsx').hidden=true;
  W={etapa:0,resp:null};ARM=false;b.textContent='Apagar tudo';
  ver('v-start');toast('tudo zerado — quando quiser, bora de novo 👊');
 };
