@@ -94,6 +94,7 @@ table.pl td:first-child{font-weight:700;white-space:nowrap}
 .trow{display:flex;gap:10px;align-items:center;background:var(--bg3);border:1px solid var(--line);border-radius:13px;padding:11px 13px;margin-bottom:8px}
 .trow .nn{flex:1;font-weight:600}
 .trow .ss{color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums}
+.comoq{background:none;border:1px solid var(--line);border-radius:8px;padding:2px 9px;font-size:11px;color:var(--muted);margin-top:6px}
 .toast{position:fixed;left:50%;bottom:74px;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--line);padding:11px 16px;border-radius:12px;font-size:13.5px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:80;max-width:92vw;text-align:center}
 .toast.on{opacity:1}
 @media(max-width:600px){.grid2{grid-template-columns:1fr 1fr}h1{font-size:20px}}
@@ -427,7 +428,8 @@ function dnaSistema(){
  'CURIOSIDADE ATIVA: ainda não sabe a rotina dele (sono, comida, energia, horários livres)? Pergunte UMA coisa por vez nas primeiras mensagens e adapte o treino com o que ouvir. Quando ele contar algo importante, lembre do 📌 na mensagem dele (o app guarda pra você).\nFORMATO: 2-6 frases, uma pergunta por vez, sem parede de texto. Pode sugerir ajuste de treino em texto; os botões de aplicar são do app.\n'+
  'BLOCOS QUE O APP ENTENDE (use EXATAMENTE esse formato; o app mostra o botão — você só conversa):\n'+
  '1) Montar/remontar o PLANO (no começo, ou quando ele pedir mudança de dias/local/objetivo/limitação/tempo): combine pelo papo e mande o plano em texto + o bloco:\n```plano\n{"objetivo":"forca","local":"quarto","exp":"pouco","dias":"4","tempo":"20","limit":"nenhum"}\n```\nvalores possíveis — objetivo: peso|forca|resis|saude (pode combinar com |); local: quarto|casa|parque|academia; exp: zero|pouco|meses; dias: 3|4|5|6; tempo: 10|20|40; limit: nenhum|joelho|costas|outra (pode combinar com |). Explique em texto curto o que escolheu e por quê.\n'+
- '2) Criar TIMERS (relógio): se ele pedir um timer (intervalo, prancha, tabata…), responda + o bloco:\n```timers\n[{"nome":"Tabata","seg":30}]\n```\nnome curto, seg entre 1 e 7200; vários timers podem ir no mesmo bloco. Se já existir timer com o mesmo nome, o app ATUALIZA o tempo (avise ele).'+ctx;
+ '2) Criar TIMERS (relógio): se ele pedir um timer (intervalo, prancha, tabata…), responda + o bloco:\n```timers\n[{"nome":"Tabata","seg":30}]\n```\nnome curto, seg entre 1 e 7200; vários timers podem ir no mesmo bloco. Se já existir timer com o mesmo nome, o app ATUALIZA o tempo (avise ele).\n'+
+ '3) COMO FAZER UM EXERCÍCIO: se ele perguntar como se faz (ex: "como faz afundo?"), explica em 2-3 frases com as cues de forma e sugere procurar o NOME do exercício no YouTube pra ver o movimento — você NÃO inventa link nem nome de canal, só recomenda a busca pelo nome.'+ctx;
 }
 
 /* ═══ app (DOM) ═══ */
@@ -436,9 +438,11 @@ const ST={getJ(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),3400)}
 let V='v-start',W={etapa:0,resp:null},ARM=false;
 function ver(id){
+ if((id==='v-hoje'||id==='v-plano'||id==='v-prog')&&!temPerfil()){toast('primeiro o coach monta teu plano aqui no 💬 — depois te solto lá 🥊');id='v-chat'}
  V=id;['v-start','v-wizard','v-hoje','v-plano','v-chat','v-timer','v-prog','v-config'].forEach(x=>$('#'+x).hidden=x!==id);
  $('#nav').hidden=(id==='v-start'||id==='v-wizard');
  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===id));
+ document.querySelectorAll('#nav button').forEach(b=>{const lk=(b.dataset.v==='v-hoje'||b.dataset.v==='v-plano'||b.dataset.v==='v-prog')&&!temPerfil();b.style.opacity=lk?'.45':''});
  if(id==='v-hoje')renderHoje();else if(id==='v-plano')renderPlano();else if(id==='v-prog')renderProg();else if(id==='v-config')renderCfg();else if(id==='v-chat')renderChat();else if(id==='v-timer')renderTimer();
  fire();
 }
@@ -513,7 +517,7 @@ function criarDoWizard(){
 function renderHoje(){
  fire();
  const m=$('#v-hoje'),pl=ST.getJ('coach_plano'),log=ST.getJ('coach_log')||{},p=ST.getJ('coach_perfil')||{};
- if(!pl||!Array.isArray(pl.dias)||!pl.dias.length){ST.del('coach_plano');ver('v-start');toast('teu treino tá inconsistente — bora montar de novo 🛠️');return}
+ if(!pl||!Array.isArray(pl.dias)||!pl.dias.length){ST.del('coach_plano');ver('v-chat');toast('teu treino tá inconsistente — bora montar de novo 🛠️');return}
  const ap=(p.nomes&&p.nomes.apelido)||'champ',nc=(p.nomes&&p.nomes.coach)||'Coach',iso=CZ.hojeISO(),dia=CZ.acoesDoDia(pl,iso),l=log[iso];
  const st=CZ.streak(log,iso);
  let h='';
@@ -529,7 +533,7 @@ function renderHoje(){
  if(CZ.condEvoluir(log))h+='<div class="coachfala"><b>'+nc+':</b> os últimos treinos vieram LEVES… teu corpo tá pedindo o próximo degrau 📈 (botão "Evoluir" no 🗺️)</div>';
  if(CZ.condEncolher(log))h+='<div class="coachfala"><b>'+nc+':</b> três treinos pesados seguidos — deixa eu descer a carga um pouquinho pra você respirar 🌱 (botão "Encolher" no 🗺️)</div>';
  h+='<h2>Hoje ('+dia.dn+') · '+CZ.FOCO_N[dia.foco]+'</h2>';
- h+=dia.acoes.map((a,i)=>'<div class="acao'+(l&&l.feitas[i]?' done':'')+'" data-i="'+i+'"><div class="ck">'+(l&&l.feitas[i]?'✔':'')+'</div><div><div class="tt">'+a.t+'</div>'+(a.cue?'<div class="cue">'+a.cue+'</div>':'')+'<div class="mn">'+(a.min?a.min+' min':'')+'</div></div></div>').join('');
+ h+=dia.acoes.map((a,i)=>'<div class="acao'+(l&&l.feitas[i]?' done':'')+'" data-i="'+i+'"><div class="ck">'+(l&&l.feitas[i]?'✔':'')+'</div><div><div class="tt">'+a.t+'</div>'+(a.cue?'<div class="cue">'+a.cue+'</div>':'')+'<div class="mn">'+(a.min?a.min+' min':'')+'</div><button class="comoq" data-exq="'+i+'">❓ como faz?</button></div></div>').join('');
  const sessao=(dia.foco==='A'||dia.foco==='B'||dia.foco==='cardio');
  if(sessao){
   const como=(l&&l.como)||'';
@@ -550,6 +554,7 @@ function renderHoje(){
   if(nv){const tot=lg[iso].feitas.filter(Boolean).length;toast(CZ.msgCheckin(tot))}
   renderHoje();
  });
+ m.querySelectorAll('[data-exq]').forEach(b=>b.onclick=()=>{const i=+b.dataset.exq;ver('v-chat');$('#chatin').value='como faz: '+dia.acoes[i].t+'?';enviar();});
  m.querySelectorAll('#fb .chip').forEach(c=>c.onclick=()=>{
   const lg=CZ.registrarComo(ST.getJ('coach_log')||{},iso,c.dataset.f);
   ST.setJ('coach_log',lg);
@@ -568,7 +573,7 @@ function renderHoje(){
 /* ── plano ── */
 function renderPlano(){
  const m=$('#v-plano'),pl=ST.getJ('coach_plano'),p=ST.getJ('coach_perfil')||{},log=ST.getJ('coach_log')||{};
- if(!pl||!Array.isArray(pl.dias)||!pl.dias.length){ST.del('coach_plano');ver('v-start');toast('teu treino tá inconsistente — bora montar de novo 🛠️');return}
+ if(!pl||!Array.isArray(pl.dias)||!pl.dias.length){ST.del('coach_plano');ver('v-chat');toast('teu treino tá inconsistente — bora montar de novo 🛠️');return}
  const nc=(p.nomes&&p.nomes.coach)||'Coach';
  const c=CZ.ciclo(p,pl),ps=+p.proxSem||+p.cicloSemanas||3;
  let h='<h1>🗺️ Teu treino</h1>';
@@ -617,7 +622,8 @@ function renderChat(){
  const hist=ST.getJ('coach_chat')||[];
  if(!hist.length){
   const p=ST.getJ('coach_perfil')||{},nc=(p.nomes&&p.nomes.coach)||'Coach',ap=(p.nomes&&p.nomes.apelido)||'';
-  hist.push({r:'ia',t:'Ei, '+ap+'! 🥊 aqui é o '+nc+'. Me conta como o treino tá rolando — e tua semana fora dele também (sono, comida, o que tá apertado) que eu uso isso no teu plano. No que que eu te ajudo?'});
+  const sauda=temPerfil()?('Ei, '+ap+'! 🥊 aqui é o '+nc+'. Me conta como o treino tá rolando — e tua semana fora dele também (sono, comida, o que tá apertado) que eu uso isso no teu plano. No que que eu te ajudo?'):('Ei! 🥊 aqui é o '+nc+'. Vou montar teu treino conversando com você: me conta o objetivo, onde você treina, quanto tempo tem por dia, quantos dias por semana e se tem alguma limitação — uma coisa de cada vez tá de bom tamanho. Quando o plano fechar, eu te solto no app inteiro. Pode falar aqui embaixo 👇 (ou clicar num exemplo)');
+  hist.push({r:'ia',t:sauda});
   ST.setJ('coach_chat',hist);
  }
  montarChips(hist.length);
@@ -632,8 +638,11 @@ function montarChips(n){
  const cx=$('#chipsx');if(!cx)return;
  if(n>2){cx.hidden=true;return}
  cx.hidden=false;
- cx.innerHTML=EXEMLOS.map((e,i)=>'<button class="chip" data-ex="'+i+'">'+e+'</button>').join('');
- cx.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{$('#chatin').value=EXEMLOS[+c.dataset.ex];enviar()});
+ cx.innerHTML=EXEMLOS.map((e,i)=>'<button class="chip" data-ex="'+i+'">'+e+'</button>').join('')+((!temPerfil())?'<button class="chip" data-ex="q">📝 prefiro o questionário rápido</button>':'');
+ cx.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+  if(c.dataset.ex==='q'){W={etapa:0,resp:CZ.wizResp()};wizRender();ver('v-wizard');return}
+  $('#chatin').value=EXEMLOS[+c.dataset.ex];enviar();
+ });
 }
 function segsDe(t){
  const segs=[];let m,idx=0;const re=/```(plano|timers)\s*([\s\S]*?)```/g;
@@ -706,16 +715,16 @@ function addTimersChat(cod){
 }
 
 /* ── timers: sempre 5s de preparação antes do tempo pedido ── */
-let TM={at:null,h:null};
+let TM={at:null,h:null,edi:null};
 function beep(f,d){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const a=new C(),o=a.createOscillator(),g=a.createGain();o.frequency.value=f;o.connect(g);g.connect(a.destination);g.gain.value=.12;o.start();o.stop(a.currentTime+(d||.12))}catch(e){}}
 function timerListaHTML(){
  let h='<h1>⏱️ Timers</h1>';
  h+='<div class="coachfala"><b>como funciona:</b> todo timer começa com <b>5s extras de preparação</b> — você se posiciona, e o tempo que você pediu só começa a contar depois. Aviso na tela e bipe quando valer.</div>';
  h+='<div class="card"><h3>prontos</h3>'+CZ.TIM_PRESETS.map((t,i)=>'<div class="trow"><div class="nn">'+esc(t.nome)+'</div><div class="ss">'+CZ.fmtTimer(t.seg*1000)+'</div><button class="btn g" data-ti="'+i+'" data-src="p">▶</button></div>').join('')+'</div>';
  const meus=ST.getJ('coach_timers')||[];
- h+='<div class="card"><h3>meus timers</h3>'+(meus.length?meus.map((t,i)=>'<div class="trow"><div class="nn">'+esc(t.nome)+'</div><div class="ss">'+CZ.fmtTimer(t.seg*1000)+'</div><button class="btn g" data-ti="'+i+'" data-src="m">▶</button><button class="btn d" data-del="'+i+'" style="padding:6px 10px">🗑</button></div>').join(''):'<p class="sub" style="margin:0 0 10px">nenhum ainda — cria aí embaixo ou pede no 💬 ("cria um timer de tabata")</p>')+
+ h+='<div class="card"><h3>meus timers</h3>'+(meus.length?meus.map((t,i)=>'<div class="trow"><div class="nn">'+esc(t.nome)+'</div><div class="ss">'+CZ.fmtTimer(t.seg*1000)+'</div><button class="btn g" data-ti="'+i+'" data-src="m">▶</button><button class="btn g" data-edi="'+i+'" style="padding:6px 10px">✏️</button><button class="btn d" data-del="'+i+'" style="padding:6px 10px">🗑</button></div>').join(''):'<p class="sub" style="margin:0 0 10px">nenhum ainda — cria aí embaixo ou pede no 💬 ("cria um timer de tabata")</p>')+
  '<div class="row" style="margin-top:10px"><input type="text" id="tn-nome" placeholder="nome (ex: Tabata)" maxlength="30" style="min-height:0;flex:1;min-width:120px"><input type="number" id="tn-min" min="0" max="120" placeholder="min" style="min-height:0;width:72px"><input type="number" id="tn-seg" min="0" max="59" placeholder="seg" style="min-height:0;width:72px"><button class="btn p" id="tn-add">+</button></div></div>';
- h+='<p class="sub" style="font-size:12px">os prontos sempre ficam; os teus ficam salvos no aparelho.</p>';
+ h+='<p class="sub" style="font-size:12px">os prontos sempre ficam; os teus ficam salvos no aparelho — dá pra editar ✏️ ou excluir 🗑 quando quiser.</p>';
  return h;
 }
 function timerAtivoHTML(){
@@ -725,6 +734,7 @@ function renderTimer(){
  const m=$('#v-timer');
  if(TM.at){m.innerHTML=timerAtivoHTML();const z=$('#t-zap');if(z)z.onclick=timerPara;pintarTick();return}
  if(TM.h){clearInterval(TM.h);TM.h=null}
+ TM.edi=null;
  m.innerHTML=timerListaHTML();
  m.querySelectorAll('[data-ti]').forEach(b=>b.onclick=()=>{
   const t=b.dataset.src==='p'?CZ.TIM_PRESETS[+b.dataset.ti]:(ST.getJ('coach_timers')||[])[+b.dataset.ti];
@@ -733,12 +743,23 @@ function renderTimer(){
  m.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
   const l=ST.getJ('coach_timers')||[];l.splice(+b.dataset.del,1);ST.setJ('coach_timers',l);renderTimer();
  });
+ m.querySelectorAll('[data-edi]').forEach(b=>b.onclick=()=>{
+  const t=(ST.getJ('coach_timers')||[])[+b.dataset.edi];
+  if(!t)return;
+  const p=CZ.fmtTimer(t.seg*1000).split(':');
+  $('#tn-nome').value=t.nome;$('#tn-min').value=+p[0];$('#tn-seg').value=+p[1];
+  TM.edi=+b.dataset.edi;
+  $('#tn-add').textContent='💾 salvar';
+  toast('editando "'+t.nome+'" — muda o que quiser e salva');
+ });
  const add=m.querySelector('#tn-add');
  if(add)add.onclick=()=>{
   const n=$('#tn-nome').value.trim(),mi=+$('#tn-min').value||0,se=+$('#tn-seg').value||0;
   const v=CZ.validaTimer({nome:n,seg:mi*60+se});
   if(!v)return toast('nome + tempo (até 120:59) aí 😄');
-  ST.setJ('coach_timers',CZ.timerUpsert(ST.getJ('coach_timers')||[],v));
+  let l=ST.getJ('coach_timers')||[];
+  if(TM.edi!=null){l.splice(TM.edi,1);TM.edi=null}
+  ST.setJ('coach_timers',CZ.timerUpsert(l,v));
   toast('timer salvo ⏱️ começa com 5s de preparação');renderTimer();
  };
 }
@@ -775,7 +796,7 @@ function tickTimer(){
 /* ── progresso ── */
 function renderProg(){
  const m=$('#v-prog'),pl=ST.getJ('coach_plano'),log=ST.getJ('coach_log')||{},p=ST.getJ('coach_perfil')||{};
- if(!pl||!Array.isArray(pl.dias)||!pl.dias.length){ST.del('coach_plano');ver('v-start');toast('teu treino tá inconsistente — bora montar de novo 🛠️');return}
+ if(!pl||!Array.isArray(pl.dias)||!pl.dias.length){ST.del('coach_plano');ver('v-chat');toast('teu treino tá inconsistente — bora montar de novo 🛠️');return}
  const ap=(p.nomes&&p.nomes.apelido)||'champ',nc=(p.nomes&&p.nomes.coach)||'Coach';
  let tot=0,d30=0,f30=0;
  for(let n=0;n<30;n++){const iso=CZ.isoMenos(n),l=log[iso];const prev=(CZ.acoesDoDia(pl,iso)||{acoes:[]}).acoes.length;if(l){tot+=l.feitas.filter(Boolean).length}d30+=prev;f30+=Math.min(l?l.feitas.filter(Boolean).length:0,prev)}
@@ -821,13 +842,13 @@ $('#cf-apagar').onclick=()=>{
  if(!ARM){ARM=true;b.textContent='⚠️ tem certeza? apaga TUDO';setTimeout(()=>{ARM=false;b.textContent='Apagar tudo'},4000);return}
  ['coach_perfil','coach_plano','coach_log','coach_chat','coach_uso','coach_mem','coach_timers'].forEach(k=>ST.del(k));
  W={etapa:0,resp:null};ARM=false;b.textContent='Apagar tudo';
- ver('v-start');toast('tudo zerado — quando quiser, bora de novo 👊');
+ ver('v-chat');toast('tudo zerado — quando quiser, bora de novo 👊');
 };
 
 /* ── boot ── */
 aplicarTema(localStorage.getItem('coach_tema')||'escuro');
 if(temPerfil())ver('v-hoje');
-else{ver('v-start');if(ST.getJ('coach_perfil'))toast('atualização: agora o coach é 100% treino 💪 bora montar teu plano novo')}
+else ver('v-chat');
 </script>
 </body>
 </html>
