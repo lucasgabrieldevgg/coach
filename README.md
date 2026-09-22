@@ -3,7 +3,7 @@
 Treinador **100% focado em treino**: pergunta como tua semana é de verdade, monta o circuito no lugar que você tem, alterna esforço e descanso, e sobe a carga no ritmo certo — sem drama e sem culpa. (Inspirado por uma conversa real de treino que funcionou; nenhum dado pessoal, só o método e o jeitão.)
 
 ## Como funciona
-1. **Homepage → perguntas → chat**: chega na home, escolhe o caminho (papo com o coach ou o questionário de 8 perguntas). Quando o plano fecha, **o app abre direto no chat** com tudo liberado — e o coach já te entrega a lista de treinos com **links pro YouTube** (busca pronta): objetivo · onde treina (quarto/casa/parque/academia) · experiência · dias por semana · tempo por sessão · limitações físicas · rotina · nomes
+1. **Homepage → 8 perguntas → chat**: na home, o caminho principal são **"Começar: 8 perguntas rápidas"** (objetivo, local, experiência, dias, tempo, limitações, rotina, nomes). Preencheu? O app **abre direto no 💬** com tudo liberado: o coach te cumprimenta PELO TEU nome, anuncia o plano (objetivo + local + dias que VOCÊ respondeu) e entrega a lista de treinos com **links pro YouTube** (busca pronta). Prefere conversar? O chip/da home também tem o papo: objetivo · onde treina (quarto/casa/parque/academia) · experiência · dias por semana · tempo por sessão · limitações físicas · rotina · nomes
 2. **📅 Hoje**: o treino do dia com **circuitos A/B** (exercício por exercício, com repetições do teu nível e cue de forma), cardio intervalado com o **teste da frase**, e registro de **como o treino veio** (😌 leve / 😅 na medida / 🥵 pesado)
 3. **🗺️ Plano**: semana organizada por dias disponíveis, regras de casa, **ciclo de 21 dias** e carga em **4 degraus** (sobrecarga progressiva): 2 treinos leves seguidos → o coach sugere subir · 3 pesados → sugere descer
 4. **🔁 Renovação de fase**: quando o ciclo fecha, você escolhe **quantas semanas quer pra se acostumar** com o treino novo (2/3/4) — o coach ajusta a carga pelo teu balanço, **varia o cronograma** (inverte A/B, cardio novo) e as abas Hoje e Plano atualizam na hora
@@ -17,7 +17,7 @@ Treinador **100% focado em treino**: pergunta como tua semana é de verdade, mon
 - **Menor de idade ou adulto**: aqui é equilíbrio — NUNCA dieta restritiva, déficit agressivo, suplemento ou meta de peso mágica; sono, água, comida de verdade
 - Dor aguda = parar; dor persistente = profissional de saúde. Forma antes de repetição.
 - Funciona sem internet (plano, check-in, carga, timers e progresso são locais); a IA avisa honestamente quando a fila tá cheia
-- Suíte de testes: `npm test` (108 checks — homepage→perguntas→chat, libera-geral, links do YouTube, timers e "como faz?")
+- Suíte de testes: `npm test` (113 checks — homepage→perguntas→chat, libera-geral, links do YouTube, timers e "como faz?")
 
 Abra: **https://lucasgabrieldevgg.github.io/coach/**
 

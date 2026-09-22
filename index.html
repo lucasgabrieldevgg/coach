@@ -115,8 +115,8 @@ table.pl td:first-child{font-weight:700;white-space:nowrap}
   <div class="card"><h3>❓ Pergunta antes de montar</h3><p class="sub" style="margin:0">Objetivo, onde você treina, quanto tempo assume, dias da semana, limitações — o plano nasce do teu contexto, não de modelo pronto.</p></div>
   <div class="card"><h3>💪 Circuito do teu jeito</h3><p class="sub" style="margin:0">Circuitos A e B com repetições por nível, cardio intervalado com teste da frase, e dia de descanso sem culpa (descanso constrói).</p></div>
   <div class="card"><h3>📈 Ciclo de 3 semanas</h3><p class="sub" style="margin:0">Você diz como o treino tá (leve/na medida/pesado) e o coach evolui a carga na hora certa — sobrecarga progressiva, do jeito que não quebra.</p></div>
-  <div class="row"><button class="btn p" id="b-comecar">Montar meu treino 👊</button><button class="btn g" id="b-falar">💬 Conversar com o coach</button></div>
-  <p class="sub" style="margin-top:10px;font-size:12px">os dois caminhos chegam no mesmo lugar: um plano feito pro teu contexto — no rápido você responde o questionário; no papo o coach pergunta e monta com você.</p>
+  <div class="row"><button class="btn p" id="b-comecar">Começar: 8 perguntas rápidas 📝</button><button class="btn g" id="b-falar">💬 ou conversar com o coach</button></div>
+  <p class="sub" style="margin-top:10px;font-size:12px">responde as perguntas, teu plano fica pronto e o app abre <b>direto no 💬</b> com o coach esperando (e os treinos linkados pro YouTube). Prefere papo? O coach pergunta e monta contigo — chega no mesmo lugar.</p>
   <p class="sub" style="margin-top:14px;font-size:12px">Tudo no teu navegador. Sem internet o coach segue com plano e check-in. Equilíbrio sempre: aqui não tem dieta restritiva nem número mágico — saúde séria é com profissional.</p>
 </main>
 
@@ -629,7 +629,6 @@ function renderChat(){
   hist.push({r:'ia',t:sauda});
   ST.setJ('coach_chat',hist);
  }
- montarChips(hist.length);
  pintarChat();
  lg.dataset.on='1';
  const coarse=(typeof matchMedia==='function')&&matchMedia('(pointer:coarse)').matches;
@@ -653,7 +652,7 @@ function linkTreinos(t){
 }
 function montarChips(n){
  const cx=$('#chipsx');if(!cx)return;
- if(n>2){cx.hidden=true;return}
+ if(n>2||temPerfil()){cx.hidden=true;return}
  cx.hidden=false;
  cx.innerHTML=EXEMLOS.map((e,i)=>'<button class="chip" data-ex="'+i+'">'+e+'</button>').join('')+((!temPerfil())?'<button class="chip" data-ex="q">📝 prefiro o questionário rápido</button>':'');
  cx.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
@@ -677,6 +676,7 @@ function cardDeBloco(g){
 }
 function pintarChat(){
  const hist=ST.getJ('coach_chat')||[],lg=$('#chatlog');
+ montarChips(hist.length);
  lg.innerHTML=hist.slice(-60).map((x)=>{
   if(x.r==='eu')return '<div class="msg eu">'+esc(x.t)+' <button class="pk" data-t="'+encodeURIComponent(x.t)+'" title="guardar isso sobre você">📌</button></div>';
   const segs=segsDe(x.t);
@@ -714,7 +714,9 @@ function anunciaPlanoNoChat(pl,primeiro){
  const nomes=[];
  pl.dias.forEach(d=>d.acoes.forEach(x=>{const n=nomesTreinos().find(y=>x.t.indexOf(y.f)>=0);if(n&&!nomes.some(m=>m.f===n.f))nomes.push(n)}));
  const hist=ST.getJ('coach_chat')||[];
- hist.push({r:'ia',t:(primeiro?'Liberado! 🎉 teu plano tá no 🗺️ — Hoje, Plano e Progresso destravaram. ':'Plano atualizado! 🗺️ ')+'Quer ver o movimento de cada treino? Toca no nome que abre o YouTube com a busca pronta: '+nomes.map(n=>n.f).join(' · ')});
+ const p=ST.getJ('coach_perfil')||{},ap=(p.nomes&&p.nomes.apelido)||'champ',nc=(p.nomes&&p.nomes.coach)||'Coach';
+ if(primeiro&&!hist.length)hist.push({r:'ia',t:'Ei, '+ap+'! 🥊 aqui é o '+nc+'. Teu plano fechou pelas tuas respostas — qualquer coisa a gente remonta conversando. Bora pro primeiro dia?'});
+ hist.push({r:'ia',t:(primeiro?'Liberado! 🎉 teu plano de '+CZ.objNomes(pl.objetivo)+' no '+((CZ.LOCAIS.find(x=>x.id===pl.local)||{}).n||'teu canto')+' ('+pl.diasSemana+'x/semana) tá no 🗺️ — Hoje, Plano e Progresso destravaram. ':'Plano atualizado! 🗺️ ')+'Quer ver o movimento de cada treino? Toca no nome que abre o YouTube com a busca pronta: '+nomes.map(n=>n.f).join(' · ')});
  ST.setJ('coach_chat',hist);
  pintarChat();
 }

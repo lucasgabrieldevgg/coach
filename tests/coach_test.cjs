@@ -91,7 +91,8 @@ w.addEventListener('error',e=>console.log('  [window error]',e.message));
 await tick(150);
 ok($('#v-start').hidden===false,'boot sem plano → HOMEPAGE');
 ok($('#nav').hidden===true,'nav escondida na homepage');
-ok(!!$('#b-falar')&&!!$('#b-comecar'),'dois caminhos na homepage (papo + questionário)');
+ok(!!$('#b-falar')&&!!$('#b-comecar'),'dois caminhos na homepage (perguntas + papo)');
+ok($('#b-comecar').textContent.indexOf('8 perguntas')>=0,'PERGUNTAS são o caminho principal da homepage');
 
 secao('DOM: pelo papo — cadeado até o plano fechar');
 $('#b-falar').click();await tick(120);
@@ -103,6 +104,7 @@ ok($$('#chipsx .chip').length===5,'5 chips (4 exemplos + questionário)');
 ok($('#chatlog').textContent.indexOf('te solto no app inteiro')>=0,'saudação promete liberar geral');
 
 secao('DOM: pelo questionário → plano → abre DIRETO NO CHAT');
+w.localStorage.removeItem('coach_chat');delete $('#chatlog').dataset.on;
 $('#chipsx [data-ex="q"]').click();await tick(120);
 ok($('#v-wizard').hidden===false,'chip abre o wizard');
 for(let rodada=0;rodada<12;rodada++){
@@ -130,7 +132,12 @@ await tick(150);
 ok($('#v-chat').hidden===false,'wizard completo → abre DIRETO NO CHAT');
 ok($('#nav button[data-v="v-hoje"]').style.opacity==='','LIBERADO: cadeados sumiram do nav');
 ok(!!w.localStorage.getItem('coach_plano'),'plano do wizard salvo');
-const bub1=$$('#chatlog .msg.ia'),ult1=bub1[bub1.length-1];
+const bub1=$$('#chatlog .msg.ia');
+ok(bub1.length>=2&&bub1[0].textContent.indexOf('Ei, Teste!')>=0,'saudação personalizada vem PRIMEIRO (pelas respostas)');
+ok(bub1[0].textContent.indexOf('pelas tuas respostas')>=0,'saudação cita que o plano veio das respostas');
+const ult1=bub1[bub1.length-1];
+ok(ult1.textContent.indexOf('Quarto')>=0&&ult1.textContent.indexOf('3x/semana')>=0,'anúncio cita LOCAL e DIAS das respostas');
+ok($('#chipsx').hidden===true,'chips de exemplo somem quando já tem plano');
 ok(ult1.textContent.indexOf('Liberado!')>=0&&ult1.textContent.indexOf('Toca no nome')>=0,'coach anuncia o plano com a lista de treinos');
 ok(ult1.querySelectorAll('a[href*="youtube.com/results"]').length>=6,'lista com treinos LINKADOS ('+ult1.querySelectorAll('a[href*="youtube.com/results"]').length+')');
 const lk0=ult1.querySelector('a');
