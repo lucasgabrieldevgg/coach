@@ -17,10 +17,11 @@ Treinador **100% focado em treino**: pergunta como tua semana é de verdade, mon
 ## Cuidados que fazem parte
 - **Limitação física vira ajuste, não desculpa**: joelho → polichinelo vira marcha parada, afundo com amplitude curta; costas → substituições que protegem a lombar
 - **Menor de idade ou adulto**: aqui é equilíbrio — NUNCA dieta restritiva, déficit agressivo, suplemento ou meta de peso mágica; sono, água, comida de verdade
+- **Coach com relógio**: sabe a data, o dia da semana, a hora e o fuso da pessoa (nunca mais "não sei que dia é hoje") — e ao fechar o plano ele APRESENTA a semana na conversa
 - **Coach que escuta**: repete o entendimento quando você cita dias/horários, acata correção na hora (e não repete o erro), não pergunta duas vezes a mesma coisa e é PROIBIDO de virar questionário de dieta (macros/calorias)
 - Dor aguda = parar; dor persistente = profissional de saúde. Forma antes de repetição.
 - Funciona sem internet (plano, check-in, carga, timers e progresso são locais); a IA avisa honestamente quando a fila tá cheia
-- Suíte de testes: `npm test` (108 checks — homepage→perguntas→chat, libera-geral, links do YouTube, timers e "como faz?")
+- Suíte de testes: `npm test` (118 checks — homepage→perguntas→chat, libera-geral, links do YouTube, timers e "como faz?")
 
 Abra: **https://lucasgabrieldevgg.github.io/coach/**
 

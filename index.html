@@ -421,6 +421,14 @@ function dnaSistema(){
  const st=CZ.streak(ST.getJ('coach_log')||{},CZ.hojeISO());
  const fb=CZ.feedbacks(ST.getJ('coach_log')||{});
  ctx+='\nofensiva: '+st+' dia(s)'+(fb.length?('\núltimos treinos (pra ele mesmo): '+fb.join(', ')):'');
+ const AGORA=new Date();
+ const dsem=CZ.DIAS[AGORA.getDay()];
+ const hh=String(AGORA.getHours()).padStart(2,'0'),mm=String(AGORA.getMinutes()).padStart(2,'0');
+ const tz=(typeof Intl!=='undefined'&&Intl.DateTimeFormat().resolvedOptions().timeZone)||'local';
+ let relogio='\nRELÓGIO: hoje é '+dsem+' ('+CZ.hojeISO()+'), agora são '+hh+':'+mm+' no fuso dele ('+tz+').';
+ if(pl)relogio+=' Hoje no plano: '+CZ.acoesDoDia(pl,CZ.hojeISO()).dn+' — foco '+CZ.FOCO_N[CZ.acoesDoDia(pl,CZ.hojeISO()).foco]+'.';
+ relogio+=' Você SABE que dia e hora são — NUNCA diga que não sabe que dia é hoje.';
+ ctx+=relogio;
  const mem=ST.getJ('coach_mem')||[];
  ctx+=(mem.length?('\nCOISAS QUE ELE TE CONTOU (fixou com 📌 — use com naturalidade): '+mem.slice(-15).map(x=>x.t).join(' | ')):'');
  return 'Você é o '+nc+', treinador de TREINO dentro do app IA Coach. O usuário se chama '+ap+'.\n'+
@@ -791,9 +799,10 @@ function anunciaPlanoNoChat(pl,primeiro){
  const hist=ST.getJ('coach_chat')||[];
  const p=ST.getJ('coach_perfil')||{},ap=(p.nomes&&p.nomes.apelido)||'champ';
  if(primeiro){
-  hist.push({r:'ia',t:'Plano fechado, '+ap+'! 🥊 teu plano tá no 🗺️ com a semana inteira — e cada treino tem link do YouTube no nome. Hoje, Plano e Progresso destravaram.'});
+  const semana=pl.dias.map(d=>d.dn+' — '+CZ.FOCO_N[d.foco]).join(' · ');
+  hist.push({r:'ia',t:'Plano fechado, '+ap+'! 🥊 Olha tua semana: '+semana+'. Tá tudo no 🗺️, cada treino com link do YouTube no nome — e Hoje, Plano e Progresso destravaram.'});
   hist.push({r:'ia',t:'Agora me conta UMA coisa pra eu calibrar teu plano: como tá teu sono — e quais horários costumam sobrar na tua semana?'});
- }else hist.push({r:'ia',t:'Plano atualizado! 🗺️ os treinos já tão lá com link no nome — qualquer ajuste, só falar.'});
+ }else{const semana=pl.dias.map(d=>d.dn+' — '+CZ.FOCO_N[d.foco]).join(' · ');hist.push({r:'ia',t:'Plano atualizado! 🗺️ '+semana+'. Link no nome de cada treino — qualquer ajuste, só falar.'});}
  ST.setJ('coach_chat',hist);
  pintarChat();
 }
