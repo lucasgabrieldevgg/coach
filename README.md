@@ -19,7 +19,7 @@ Treinador **100% focado em treino**: pergunta como tua semana é de verdade, mon
 - **Menor de idade ou adulto**: aqui é equilíbrio — NUNCA dieta restritiva, déficit agressivo, suplemento ou meta de peso mágica; sono, água, comida de verdade
 - Dor aguda = parar; dor persistente = profissional de saúde. Forma antes de repetição.
 - Funciona sem internet (plano, check-in, carga, timers e progresso são locais); a IA avisa honestamente quando a fila tá cheia
-- Suíte de testes: `npm test` (104 checks — homepage→perguntas→chat, libera-geral, links do YouTube, timers e "como faz?")
+- Suíte de testes: `npm test` (103 checks — homepage→perguntas→chat, libera-geral, links do YouTube, timers e "como faz?")
 
 Abra: **https://lucasgabrieldevgg.github.io/coach/**
 

@@ -115,8 +115,8 @@ table.pl td:first-child{font-weight:700;white-space:nowrap}
   <div class="card"><h3>❓ Pergunta antes de montar</h3><p class="sub" style="margin:0">Objetivo, onde você treina, quanto tempo assume, dias da semana, limitações — o plano nasce do teu contexto, não de modelo pronto.</p></div>
   <div class="card"><h3>💪 Circuito do teu jeito</h3><p class="sub" style="margin:0">Circuitos A e B com repetições por nível, cardio intervalado com teste da frase, e dia de descanso sem culpa (descanso constrói).</p></div>
   <div class="card"><h3>📈 Ciclo de 3 semanas</h3><p class="sub" style="margin:0">Você diz como o treino tá (leve/na medida/pesado) e o coach evolui a carga na hora certa — sobrecarga progressiva, do jeito que não quebra.</p></div>
-  <div class="row"><button class="btn p" id="b-comecar">Começar: 8 perguntas rápidas 📝</button><button class="btn g" id="b-falar">💬 ou conversar com o coach</button></div>
-  <p class="sub" style="margin-top:10px;font-size:12px">responde as perguntas, teu plano fica pronto e o app abre <b>direto no 💬</b> com o coach esperando (e os treinos linkados pro YouTube). Prefere papo? O coach pergunta e monta contigo — chega no mesmo lugar.</p>
+  <div class="row"><button class="btn p" id="b-comecar">Começar: 8 perguntas rápidas 📝</button></div>
+  <p class="sub" style="margin-top:10px;font-size:12px">responde as perguntas, teu plano fica pronto e o app abre <b>direto no 💬</b> — aí sim você conversa com o coach (que já te conhece e continua perguntando pra calibrar).</p>
   <p class="sub" style="margin-top:14px;font-size:12px">Tudo no teu navegador. Sem internet o coach segue com plano e check-in. Equilíbrio sempre: aqui não tem dieta restritiva nem número mágico — saúde séria é com profissional.</p>
 </main>
 
@@ -627,7 +627,7 @@ function renderChat(){
  const hist=ST.getJ('coach_chat')||[];
  if(!hist.length){
   const p=ST.getJ('coach_perfil')||{},nc=(p.nomes&&p.nomes.coach)||'Coach',ap=(p.nomes&&p.nomes.apelido)||'';
-  const sauda=temPerfil()?('Ei, '+ap+'! 🥊 aqui é o '+nc+'. Me conta como o treino tá rolando — e tua semana fora dele também (sono, comida, o que tá apertado) que eu uso isso no teu plano. No que que eu te ajudo?'):('Ei! 🥊 aqui é o '+nc+'. Pra eu MONTAR teu plano, usa o botão "Começar: 8 perguntas" na homepage (←) — aqui a gente conversa e eu já vou te conhecendo. No que quer começar?');
+  const sauda=temPerfil()?('Ei, '+ap+'! 🥊 aqui é o '+nc+'. Me conta como o treino tá rolando — e tua semana fora dele também (sono, comida, o que tá apertado) que eu uso isso no teu plano. No que que eu te ajudo?'):('Ei! 🥊 aqui é o '+nc+'. Meu portal de entrada é o botão "Começar: 8 perguntas" na homepage (←) — responde lá e eu já te conheço de portas abertas. Aqui a gente conversa por cima do teu plano.');
   hist.push({r:'ia',t:sauda});
   ST.setJ('coach_chat',hist);
  }
@@ -654,11 +654,10 @@ function linkTreinos(t){
 }
 function montarChips(n){
  const cx=$('#chipsx');if(!cx)return;
- if(n>2||temPerfil()||ST.getJ('coach_quiz')){cx.hidden=true;return}
+ if(n>2||!temPerfil()||ST.getJ('coach_quiz')){cx.hidden=true;return}
  cx.hidden=false;
- cx.innerHTML=EXEMLOS.map((e,i)=>'<button class="chip" data-ex="'+i+'">'+e+'</button>').join('')+((!temPerfil())?'<button class="chip" data-ex="q">📝 questionário rápido</button>':'');
+ cx.innerHTML=EXEMLOS.map((e,i)=>'<button class="chip" data-ex="'+i+'">'+e+'</button>').join('');
  cx.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
-  if(c.dataset.ex==='q'){W={etapa:0,resp:CZ.wizResp()};wizRender();ver('v-wizard');return}
   $('#chatin').value=EXEMLOS[+c.dataset.ex];enviar();
  });
 }
@@ -935,7 +934,6 @@ function aplicarTema(t){if(t==='claro')document.documentElement.setAttribute('da
 $('#b-comecar').onclick=()=>{W={etapa:0,resp:CZ.wizResp()};wizRender();ver('v-wizard')};
 $('#w-avancar').onclick=wizAvanca;
 $('#w-voltar').onclick=()=>{if(W.etapa>0){W.etapa--;wizRender()}};
-$('#b-falar').onclick=()=>ver('v-chat');
 $('#b-enviar').onclick=enviar;
 $('#chatin').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviar()}});
 document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>ver(b.dataset.v));
