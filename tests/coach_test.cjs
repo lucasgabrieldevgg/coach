@@ -77,6 +77,13 @@ ok(CZ.ciclo(pv,pl).renovar,'ciclo fechado detecta renovação');
 ok(CZ.renovarPlano(pv,pl,log,2).plano.semanas===2,'renovação aplica semanas');
 ok(!!CZ.wizResp()&&CZ.wizCompleto({objetivo:['peso'],local:'quarto',exp:'zero',dias:'3',tempo:'10',limit:['nenhum'],nomes:{apelido:'B'}}),'wizard helpers ok');
 
+secao('DNA: regras de ESCUTA (o caso do diálogo que ele mostrou)');
+ok(HTML.indexOf('ESCUTA (IMPORTANTE)')>0,'regra de escuta no DNA');
+ok(HTML.indexOf('nunca mais repita a versão errada')>0,'correção acatada de vez');
+ok(HTML.indexOf('PROIBIDO perguntar macros')>0,'macro/caloria/questionário clínico proibido');
+ok(HTML.indexOf('TODOS os dias')>0,'exemplo do erro real documentado no DNA');
+ok(HTML.indexOf('REPITA o entendimento em 1 frase')>0,'coach repete o entendido p/ ser corrigível');
+
 /* ═══ 2. DOM ═══ */
 secao('DOM: HOMEPAGE primeiro');
 const {JSDOM}=require('jsdom');
