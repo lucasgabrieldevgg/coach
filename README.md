@@ -1,8 +1,12 @@
 # 🥊 IA Coach — treino que cabe na tua vida
 
 [![testes](https://github.com/lucasgabrieldevgg/coach/actions/workflows/ci.yml/badge.svg)](https://github.com/lucasgabrieldevgg/coach/actions/workflows/ci.yml)
+![suíte](https://img.shields.io/badge/su%C3%ADte-118%20checks-brightgreen)
 
 Treinador **100% focado em treino**: pergunta como tua semana é de verdade, monta o circuito no lugar que você tem, alterna esforço e descanso, e sobe a carga no ritmo certo — sem drama e sem culpa. (Inspirado por uma conversa real de treino que funcionou; nenhum dado pessoal, só o método e o jeitão.)
+
+## 🌐 Teste agora
+**https://lucasgabrieldevgg.github.io/coach/** — abre direto no navegador, sem conta: teus dados ficam no teu aparelho.
 
 ## Como funciona
 1. **Homepage → 8 PERGUNTAS CLÁSSICAS → chat**: "Começar: 8 perguntas rápidas" abre a tela de sempre (PERGUNTA 1 DE 8). Preencheu? O app **abre direto no 💬** com tudo liberado: o coach anuncia o plano pelo teu nome e **continua perguntando no chat** (sono, horários — pra calibrar). No 🗺️, cada exercício tem link do YouTube no nome.
@@ -25,13 +29,24 @@ Treinador **100% focado em treino**: pergunta como tua semana é de verdade, mon
 - Funciona sem internet (plano, check-in, carga, timers e progresso são locais); a IA avisa honestamente quando a fila tá cheia
 - Suíte de testes: `npm test` (118 checks — homepage→perguntas→chat, libera-geral, links do YouTube, timers e "como faz?")
 
-Abra: **https://lucasgabrieldevgg.github.io/coach/**
+Feito por [lucasgabrieldevgg](https://github.com/lucasgabrieldevgg) 💚
 
-Feito por [lucasgabrieldevgg](https://github.com/lucasgabrieldevgg) 💜
+## Como rodar
+É um arquivo só: baixe o `index.html` e abra no navegador (ou sirva com qualquer servidor estático). Funciona offline depois de carregado.
 
-## Desenvolvimento
+## Como testar
 ```bash
 npm ci
 npm test   # suíte com 118 checks de comportamento (jsdom)
 ```
-Os testes rodam automaticamente no push via GitHub Actions.
+Os testes rodam automaticamente no push via GitHub Actions (badge lá em cima).
+
+## Stack
+- Single-file HTML/CSS/JS vanilla — sem build, sem framework, sem backend
+- Tudo local no aparelho (localStorage): plano, check-ins, timers e progresso
+- IA por fila gratuita (proxy próprio + fallbacks) — nenhuma chave no cliente
+- Suíte de comportamento com jsdom + CI no GitHub Actions
+- Publicado no GitHub Pages
+
+## Licença
+MIT — vê o arquivo [LICENSE](LICENSE).
