@@ -1,9 +1,11 @@
 # 🥊 IA Coach — treino que cabe na tua vida
 
+[![testes](https://github.com/lucasgabrieldevgg/coach/actions/workflows/ci.yml/badge.svg)](https://github.com/lucasgabrieldevgg/coach/actions/workflows/ci.yml)
+
 Treinador **100% focado em treino**: pergunta como tua semana é de verdade, monta o circuito no lugar que você tem, alterna esforço e descanso, e sobe a carga no ritmo certo — sem drama e sem culpa. (Inspirado por uma conversa real de treino que funcionou; nenhum dado pessoal, só o método e o jeitão.)
 
 ## Como funciona
-1. **Homepage → 8 PERGUNTAS CLÁSSICAS → chat**: "Começar: 8 perguntas rápidas" abre a tela de sempre (PERGUNTA 1 DE 8). Preencheu? O app **abre direto no 💬** com tudo liberado: o coach anuncia o plano pelo teu nome e **continua perguntando no chat** (sono, horários — pra calibrar). No 🗺️, cada exercício tem link do YouTube no nome. Prefere papo livre? "conversar com o coach" também tá na home
+1. **Homepage → 8 PERGUNTAS CLÁSSICAS → chat**: "Começar: 8 perguntas rápidas" abre a tela de sempre (PERGUNTA 1 DE 8). Preencheu? O app **abre direto no 💬** com tudo liberado: o coach anuncia o plano pelo teu nome e **continua perguntando no chat** (sono, horários — pra calibrar). No 🗺️, cada exercício tem link do YouTube no nome.
 
 
 2. **📅 Hoje**: o treino do dia com **circuitos A/B** (exercício por exercício, com repetições do teu nível e cue de forma), cardio intervalado com o **teste da frase**, e registro de **como o treino veio** (😌 leve / 😅 na medida / 🥵 pesado)
@@ -26,3 +28,10 @@ Treinador **100% focado em treino**: pergunta como tua semana é de verdade, mon
 Abra: **https://lucasgabrieldevgg.github.io/coach/**
 
 Feito por [lucasgabrieldevgg](https://github.com/lucasgabrieldevgg) 💜
+
+## Desenvolvimento
+```bash
+npm ci
+npm test   # suíte com 118 checks de comportamento (jsdom)
+```
+Os testes rodam automaticamente no push via GitHub Actions.
