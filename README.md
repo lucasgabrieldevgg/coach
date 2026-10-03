@@ -1,52 +1,53 @@
-# 🥊 IA Coach — treino que cabe na tua vida
+[🇧🇷 Português](README.pt-BR.md)
 
-[![testes](https://github.com/lucasgabrieldevgg/coach/actions/workflows/ci.yml/badge.svg)](https://github.com/lucasgabrieldevgg/coach/actions/workflows/ci.yml)
-![suíte](https://img.shields.io/badge/su%C3%ADte-118%20checks-brightgreen)
+# 🥊 AI Coach — training that fits your life
 
-Treinador **100% focado em treino**: pergunta como tua semana é de verdade, monta o circuito no lugar que você tem, alterna esforço e descanso, e sobe a carga no ritmo certo — sem drama e sem culpa. (Inspirado por uma conversa real de treino que funcionou; nenhum dado pessoal, só o método e o jeitão.)
+[![tests](https://github.com/lucasgabrieldevgg/coach/actions/workflows/ci.yml/badge.svg)](https://github.com/lucasgabrieldevgg/coach/actions/workflows/ci.yml)
+![suite](https://img.shields.io/badge/suite-118%20checks-brightgreen)
 
-## 🌐 Teste agora
-**https://lucasgabrieldevgg.github.io/coach/** — abre direto no navegador, sem conta: teus dados ficam no teu aparelho.
+A coach **100% focused on training**: asks how your week really looks, builds the circuit around the equipment you have, alternates effort and rest, and ramps the load at the right pace — no drama, no guilt. (Inspired by a real training conversation that worked; no personal data, just the method and the vibe.)
 
-## Como funciona
-1. **Homepage → 8 PERGUNTAS CLÁSSICAS → chat**: "Começar: 8 perguntas rápidas" abre a tela de sempre (PERGUNTA 1 DE 8). Preencheu? O app **abre direto no 💬** com tudo liberado: o coach anuncia o plano pelo teu nome e **continua perguntando no chat** (sono, horários — pra calibrar). No 🗺️, cada exercício tem link do YouTube no nome.
+## 🌐 Try it now
+**https://lucasgabrieldevgg.github.io/coach/** — opens right in the browser, no account: your data stays on your device.
 
+## How it works
+1. **Homepage → 8 CLASSIC QUESTIONS → chat**: "Start: 8 quick questions" opens the usual screen (QUESTION 1 OF 8). Done? The app **drops you straight into the 💬** with everything unlocked: the coach announces the plan by your name and **keeps asking in the chat** (sleep, schedule — to calibrate). On 🗺️, every exercise has a YouTube link in its name.
 
-2. **📅 Hoje**: o treino do dia com **circuitos A/B** (exercício por exercício, com repetições do teu nível e cue de forma), cardio intervalado com o **teste da frase**, e registro de **como o treino veio** (😌 leve / 😅 na medida / 🥵 pesado)
-3. **🗺️ Plano**: semana organizada por dias disponíveis, regras de casa, **ciclo de 21 dias** e carga em **4 degraus** (sobrecarga progressiva): 2 treinos leves seguidos → o coach sugere subir · 3 pesados → sugere descer
-4. **🔁 Renovação de fase**: quando o ciclo fecha, você escolhe **quantas semanas quer pra se acostumar** com o treino novo (2/3/4) — o coach ajusta a carga pelo teu balanço, **varia o cronograma** (inverte A/B, cardio novo) e as abas Hoje e Plano atualizam na hora
-5. **💬 Coach**: IA especialista em treino (fila gratuita) que sabe teu plano, teu ciclo e teus últimos treinos — e **pergunta sobre tua vida** (sono, comida, energia) pra adaptar; fixe o que ela precisa lembrar com **📌** (fica em ⚙️ Ajustes → O que o coach lembra). **Ela também MONTA o plano conversando**: conta teu contexto no papo (ou clica nos exemplos) e ela entrega o plano pronto pra aplicar na aba 🗺️ — e cria/modifica **timers** pelo chat
-6. **⏱️ Timers**: relógio estilo Google com presets (descansos, prancha, cardio) + criação de **timers personalizados** — com **editar ✏️** e **excluir 🗑**; todo timer começa com **5s extras de preparação** (aviso na tela e bipe quando valer e quando fechar); a IA do chat cria e ajusta teus timers
-7. **❓ como faz? + treinos linkados**: cada exercício do dia tem o botão — o coach explica a forma em 2-3 frases. E em QUALQUER fala do coach, os nomes dos exercícios viram **links azuis** que abrem o YouTube com a busca já digitada (sem link inventado)
-8. **📈 Progresso**: adesão 7/30 dias, ofensiva 🔥, como os treinos vieram, fase do ciclo
+2. **📅 Today**: the day's workout with **A/B circuits** (exercise by exercise, reps for your level plus form cues), interval cardio with the **sentence test**, and a log of **how the workout felt** (😌 easy / 😅 just right / 🥵 heavy)
+3. **🗺️ Plan**: the week organized around your available days, house rules, a **21-day cycle** and load in **4 steps** (progressive overload): 2 light workouts in a row → the coach suggests going up · 3 heavy → suggests going down
+4. **🔁 Phase renewal**: when a cycle closes, you choose **how many weeks to settle into** the new training (2/3/4) — the coach adjusts the load based on your balance, **varies the schedule** (flips A/B, new cardio) and the Today and Plan tabs update instantly
+5. **💬 Coach**: a training-specialist AI (free queue) that knows your plan, your cycle and your last workouts — and **asks about your life** (sleep, food, energy) to adapt; pin what it must remember with **📌** (lives in ⚙️ Settings → What the coach remembers). **It also BUILDS the plan by chatting**: tell it your context (or click the examples) and it delivers a plan ready to apply on the 🗺️ tab — and creates/edits **timers** through the chat
+6. **⏱️ Timers**: Google-style clock with presets (rests, plank, cardio) + **custom timers** — with **edit ✏️** and **delete 🗑**; every timer starts with **5 extra seconds of prep** (on-screen warning, beeps when it starts and ends); the chat AI creates and tunes your timers
+7. **❓ how do I do it? + linked workouts**: every exercise of the day has the button — the coach explains form in 2-3 sentences. And in ANY coach message, exercise names become **blue links** that open YouTube with the search pre-typed (no invented links)
+8. **📈 Progress**: 7/30-day adherence, 🔥 streak, how workouts felt, cycle phase
 
-## Cuidados que fazem parte
-- **Limitação física vira ajuste, não desculpa**: joelho → polichinelo vira marcha parada, afundo com amplitude curta; costas → substituições que protegem a lombar
-- **Menor de idade ou adulto**: aqui é equilíbrio — NUNCA dieta restritiva, déficit agressivo, suplemento ou meta de peso mágica; sono, água, comida de verdade
-- **Coach com relógio**: sabe a data, o dia da semana, a hora e o fuso da pessoa (nunca mais "não sei que dia é hoje") — e ao fechar o plano ele APRESENTA a semana na conversa
-- **Coach que escuta**: repete o entendimento quando você cita dias/horários, acata correção na hora (e não repete o erro), não pergunta duas vezes a mesma coisa e é PROIBIDO de virar questionário de dieta (macros/calorias)
-- Dor aguda = parar; dor persistente = profissional de saúde. Forma antes de repetição.
-- Funciona sem internet (plano, check-in, carga, timers e progresso são locais); a IA avisa honestamente quando a fila tá cheia
-- Suíte de testes: `npm test` (118 checks — homepage→perguntas→chat, libera-geral, links do YouTube, timers e "como faz?")
+## Care that comes built-in
+- **Physical limitation becomes an adjustment, not an excuse**: knee → jumping jacks become marching in place, lunge with shorter range; back → substitutions that protect the lower spine
+- **Minor or adult**: balance is the rule — NEVER restrictive diets, aggressive deficits, supplements or magic weight goals; sleep, water, real food
+- **Coach with a clock**: knows the date, weekday, time and your timezone (no more "I don't know what day it is") — and when the plan closes it PRESENTS the week in the conversation
+- **Coach that listens**: repeats its understanding when you mention days/times, accepts corrections right away (and never repeats the mistake), never asks the same thing twice and is FORBIDDEN from becoming a diet quiz (macros/calories)
+- Acute pain = stop; persistent pain = see a health professional. Form before reps.
+- Works offline (plan, check-in, load, timers and progress are local); the AI honestly tells you when the queue is full
+- Test suite: `npm test` (118 checks — homepage→questions→chat, unlock-all, YouTube links, timers and "how do I do it?")
 
-Feito por [lucasgabrieldevgg](https://github.com/lucasgabrieldevgg) 💚
+Made by [lucasgabrieldevgg](https://github.com/lucasgabrieldevgg) 💚
 
-## Como rodar
-É um arquivo só: baixe o `index.html` e abra no navegador (ou sirva com qualquer servidor estático). Funciona offline depois de carregado.
+## Running it
+It's a single file: download `index.html` and open in the browser (or serve it with any static server). Works offline once loaded.
 
-## Como testar
+## Testing it
 ```bash
 npm ci
-npm test   # suíte com 118 checks de comportamento (jsdom)
+npm test   # suite with 118 behavior checks (jsdom)
 ```
-Os testes rodam automaticamente no push via GitHub Actions (badge lá em cima).
+Tests run automatically on push via GitHub Actions (badge up top).
 
 ## Stack
-- Single-file HTML/CSS/JS vanilla — sem build, sem framework, sem backend
-- Tudo local no aparelho (localStorage): plano, check-ins, timers e progresso
-- IA por fila gratuita (proxy próprio + fallbacks) — nenhuma chave no cliente
-- Suíte de comportamento com jsdom + CI no GitHub Actions
-- Publicado no GitHub Pages
+- Single-file vanilla HTML/CSS/JS — no build, no framework, no backend
+- Everything local on the device (localStorage): plan, check-ins, timers and progress
+- AI via a free queue (own proxy + fallbacks) — no keys in the client
+- jsdom behavior suite + CI on GitHub Actions
+- Published on GitHub Pages
 
-## Licença
-MIT — vê o arquivo [LICENSE](LICENSE).
+## License
+MIT — see [LICENSE](LICENSE).
