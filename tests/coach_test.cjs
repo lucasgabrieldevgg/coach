@@ -295,6 +295,13 @@ ok($('#tfase').textContent==='FIM!','no fim: FIM!');
 $('#t-zap').click();await tick(120);
 ok(!$('#v-timer').querySelector('#tnum'),'fechar volta pra lista');
 
+/* craft floor — piso de acabamento (auditoria) */
+t('seleção na identidade (âmbar)', html.includes('::selection{background:rgba(255,176,61,.35)'));
+t('foco visível (:focus-visible âmbar)', html.includes(':focus-visible{outline:2px solid var(--brand)'));
+t('scrollbar temático (FF + WebKit)', html.includes('scrollbar-color:var(--line)') && html.includes('::-webkit-scrollbar-thumb'));
+t('placeholders legíveis', html.includes('::placeholder{color:var(--muted)'));
+t('meta description', html.includes('<meta name="description"'));
+
 console.log('\n══════════════════════════');
 console.log('RESULTADO: '+P+' ✓ / '+F+' ✗'+(F?(' → '+FALHAS.join(' | ')):' — SUÍTE INTEIRA PASSOU 🥊'));
 process.exit(F?1:0);
