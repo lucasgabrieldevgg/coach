@@ -144,7 +144,7 @@ h1{font-family:var(--fd);font-weight:400;letter-spacing:.02em;line-height:1.04;f
 <main id="v-start">
   <h1>Treino que cabe na tua vida 🥊</h1>
   <p class="sub">Um treinador que pergunta como tua semana é de verdade, monta o circuito no lugar que você tem, alterna esforço e descanso, e sobe a carga no ritmo certo — sem drama e sem culpa.</p>
-  <div class="card"><h3>❓ Pergunta antes de montar</h3><p class="sub" style="margin:0">Objetivo, onde você treina, quanto tempo assume, dias da semana, limitações — o plano nasce do teu contexto, não de modelo pronto.</p></div>
+  <div class="card"><h3>❓ Pergunta antes de montar</h3><p class="sub" style="margin:0">Objetivo, onde você treina, quanto tempo assume, dias da semana, limitações — o plano nasce do teu contexto, não de modelo pronto. E nada entra no teu mapa sem tu bater o martelo: o coach mostra o rascunho, você pede mudança, edita os dias ou confirma.</p></div>
   <div class="card"><h3>💪 Circuito do teu jeito</h3><p class="sub" style="margin:0">Circuitos A e B com repetições por nível, cardio intervalado com teste da frase, e dia de descanso sem culpa (descanso constrói).</p></div>
   <div class="card"><h3>📈 Ciclo de 3 semanas</h3><p class="sub" style="margin:0">Você diz como o treino tá (leve/na medida/pesado) e o coach evolui a carga na hora certa — sobrecarga progressiva, do jeito que não quebra.</p></div>
   <div class="row"><button class="btn p" id="b-comecar">Começar: 8 perguntas rápidas 📝</button></div>
@@ -280,6 +280,31 @@ const CZ={
   });
   return {area:'treino',criado:CZ.hojeISO(),cicloIni:CZ.hojeISO(),versao:1,tier,dias,regras:CZ.REGRAS.slice(),local:perfil.local,objetivo:perfil.objetivo,diasSemana:perfil.dias,tempoSalvo:perfil.tempo,limit:perfil.limit||'nenhum',variacao:variacao||0,renovadoNoCiclo:1};
  },
+ validaSemana(semana,n){
+  if(!Array.isArray(semana)||semana.length!==n)return null;
+  const idx=semana.map(s=>{if(typeof s!=='string')return -1;const t=s.trim().toLowerCase().slice(0,3);return CZ.DIAS.findIndex(d=>d.toLowerCase()===t)});
+  if(idx.some(i=>i<0)||new Set(idx).size!==idx.length)return null;
+  return idx;
+ },
+ /* plano com os treinos nos dias da semana pedidos (rascunho conversado); inválido → padrão da casa */
+ planoComSemana(perfil,semana){
+  const base=CZ.criarPlano(perfil);
+  const treinos=base.dias.filter(d=>d.foco==='A'||d.foco==='B'||d.foco==='cardio');
+  const idx=CZ.validaSemana(semana,treinos.length);
+  if(!idx)return base;
+  const escolha={};treinos.forEach((d,k)=>{escolha[idx[k]]=d});
+  const livres=base.dias.filter(d=>d.foco==='livre'),desc=base.dias.find(d=>d.foco==='descanso');
+  const restantes=[];for(let i=0;i<7;i++)if(!(i in escolha))restantes.push(i);
+  const iDesc=restantes.indexOf(0)>=0?0:restantes.length-1;
+  const livreNovo=dn=>({dn,foco:'livre',acoes:[{t:'Movimento que der vontade: dança, bike, caminhada com música, esporte',min:20,cue:'o dia livre também conta'}]});
+  base.dias=CZ.DIAS.map((dn,i)=>{
+   if(i in escolha)return Object.assign({},escolha[i],{dn});
+   if(i===restantes[iDesc])return Object.assign({},desc,{dn});
+   const lv=livres[i%Math.max(livres.length,1)];
+   return lv?Object.assign({},lv,{dn}):livreNovo(dn);
+  });
+  return base;
+ },
  acoesDoDia(plano,iso){const js=new Date(iso+'T12:00:00').getDay();return plano.dias[js]},
  checkin(plano,log,iso,i,val){
   const d=CZ.acoesDoDia(plano,iso);if(!d)return log;
@@ -373,7 +398,7 @@ const CZ={
   const temNomes=antigo&&antigo.nomes&&antigo.nomes.apelido;
   const nomes=temNomes?antigo.nomes:{apelido:(raw&&typeof raw.apelido==='string'&&raw.apelido.trim())?raw.apelido.trim().slice(0,30):'champ',coach:(raw&&typeof raw.coach==='string'&&raw.coach.trim())?raw.coach.trim().slice(0,30):'Coach'};
   const perfil={v:2,objetivo:val.objetivo,local:val.local,exp:val.exp,dias:val.dias,tempo:val.tempo,limit:val.limit,rotina:(antigo&&antigo.rotina)||'',nomes,criado:(antigo&&antigo.criado)||CZ.hojeISO(),cicloIni:CZ.hojeISO(),tier:val.exp==='zero'?'zero':(val.exp==='meses'?'meses':'pouco')};
-  return {perfil,plano:CZ.criarPlano(perfil)};
+  return {perfil,plano:CZ.planoComSemana(perfil,raw&&raw.semana)};
  },
  validaTimer(t){
   if(!t||typeof t!=='object')return null;
@@ -471,7 +496,8 @@ function dnaSistema(){
  'CURIOSIDADE ATIVA: ele já respondeu o questionário inicial — mas AGORA é tua vez de aprofundar no chat: sono, comida, energia, horários livres, o que aperta. Pergunte UMA coisa por vez nas primeiras mensagens e adapte o treino com o que ouvir. Quando ele contar algo importante, lembre do 📌 na mensagem dele (o app guarda pra você).\n'+
  'ESCUTA (IMPORTANTE): quando ele citar dias ou horários, REPITA o entendimento em 1 frase antes de seguir ("seg a sex, 13h-17h, anotado 📌") — assim ele te corrige na hora. NUNCA invente nem troque detalhe do que ele disse: se ele disse "todos os dias", é TODOS os dias, não "terça a sexta". Se ele te corrigir: reconheça em 1 frase ("verdade, li errado 👍"), acate a versão NOVA e nunca mais repita a versão errada. NÃO pergunte de novo o que ele já respondeu: antes de perguntar qualquer coisa, olha as últimas mensagens — se ele já disse (ex: "não como tanto"), USA isso em vez de virar questionário. PROIBIDO perguntar macros, calorias, tabela de carb/proteína/gordura ou número de refeições — pergunta de gente, uma por vez ("almoça em casa ou fora?"), e adapta com o que ele já contou.\nFORMATO: 2-6 frases, uma pergunta por vez, sem parede de texto. Pode sugerir ajuste de treino em texto; os botões de aplicar são do app.\n'+
  'BLOCOS QUE O APP ENTENDE (use EXATAMENTE esse formato; o app mostra o botão — você só conversa):\n'+
- '1) Montar/remontar o PLANO (no começo, ou quando ele pedir mudança de dias/local/objetivo/limitação/tempo): combine pelo papo e mande o plano em texto + o bloco:\n```plano\n{"objetivo":"forca","local":"quarto","exp":"pouco","dias":"4","tempo":"20","limit":"nenhum"}\n```\nvalores possíveis — objetivo: peso|forca|resis|saude (pode combinar com |); local: quarto|casa|parque|academia; exp: zero|pouco|meses; dias: 3|4|5|6; tempo: 10|20|40; limit: nenhum|joelho|costas|outra (pode combinar com |). Explique em texto curto o que escolheu e por quê.\n'+
+ '1) Montar/remontar o PLANO (no começo, ou quando ele pedir mudança de dias/local/objetivo/limitação/tempo): combine pelo papo e mande o plano em texto + o bloco:\n```plano\n{"objetivo":"forca","local":"quarto","exp":"pouco","dias":"4","tempo":"20","limit":"nenhum","semana":["Seg","Qua","Sex","Sáb"]}\n```\nvalores possíveis — objetivo: peso|forca|resis|saude (pode combinar com |); local: quarto|casa|parque|academia; exp: zero|pouco|meses; dias: 3|4|5|6; tempo: 10|20|40; limit: nenhum|joelho|costas|outra (pode combinar com |). semana (OPCIONAL): em quais dias da semana caem os treinos, NA ORDEM — mesmo número de treinos do plano, só com Seg Ter Qua Qui Sex Sáb Dom. Sem semana, o app usa o padrão da casa (começa na segunda). Explique em texto curto o que escolheu e por quê.\n'+
+ 'RASCUNHO (IMPORTANTE): o app mostra teu bloco plano como RASCUNHO com botões (✏️ editar dias / ✅ confirmar plano) — o plano SÓ entra no 🗺️ quando ele CONFIRMA. NUNCA diga que aplicou ou salvou o plano: apresente tua proposta e pergunte "quer assim ou quer mudar?". Ele pediu mudança (trocar dia, tirar/colocar dia, outro foco, outra carga)? Ajuste e mande um NOVO bloco plano (nunca idêntico ao anterior), diga em 1 frase o que mudou e pergunte de novo. Depois de confirmado, mudança de treino segue o MESMO ciclo: conversa → bloco novo → confirmação.\n'+
  '2) Criar TIMERS (relógio): se ele pedir um timer (intervalo, prancha, tabata…), responda + o bloco:\n```timers\n[{"nome":"Tabata","seg":30}]\n```\nnome curto, seg entre 1 e 7200; vários timers podem ir no mesmo bloco. Se já existir timer com o mesmo nome, o app ATUALIZA o tempo (avise ele).\n'+
  '3) COMO FAZER UM EXERCÍCIO: se ele perguntar como se faz (ex: "como faz afundo?"), explica em 2-3 frases com as cues de forma e sugere procurar o NOME do exercício no YouTube pra ver o movimento — você NÃO inventa link nem nome de canal, só recomenda a busca pelo nome — no 🗺️ cada exercício da semana JÁ TEM link do YouTube no nome (o app cuida disso, você não manda link).'+ctx;
 }
@@ -499,7 +525,7 @@ function wizRender(){
  const w=CZ.WIZ[W.etapa];
  $('#w-passo').textContent='PERGUNTA '+(W.etapa+1)+' DE '+CZ.WIZ.length;
  $('#w-voltar').style.visibility=W.etapa===0?'hidden':'visible';
- $('#w-avancar').textContent=W.etapa===CZ.WIZ.length-1?'Criar meu treino 🥊':(w.tipo==='texto'?'Pular →':'Continuar →');
+ $('#w-avancar').textContent=W.etapa===CZ.WIZ.length-1?'Ver meu rascunho 🥊':(w.tipo==='texto'?'Pular →':'Continuar →');
  const c=$('#w-corpo');c.innerHTML='';
  const h=document.createElement('div');h.innerHTML='<h1>'+w.q+'</h1><p class="sub">'+(w.d||'')+'</p>';c.appendChild(h);
  if(w.tipo==='opc'){
@@ -552,10 +578,9 @@ function wizAvanca(){
 function criarDoWizard(){
  const r=W.resp;
  const perfil={v:2,objetivo:(r.objetivo||[]).join('|'),local:r.local,exp:r.exp,dias:r.dias,tempo:r.tempo,limit:(r.limit&&r.limit.length?r.limit.join('|'):'nenhum'),rotina:(r.rotina||'').trim(),nomes:{apelido:r.nomes.apelido.trim(),coach:r.nomes.coach.trim()||'Coach'},criado:CZ.hojeISO(),cicloIni:CZ.hojeISO(),tier:r.exp==='zero'?'zero':(r.exp==='meses'?'meses':'pouco')};
- const plano=CZ.criarPlano(perfil);
- ST.setJ('coach_perfil',perfil);ST.setJ('coach_plano',plano);ST.setJ('coach_log',{});
- anunciaPlanoNoChat(plano,true);
- toast('treino montado! 🥊 o coach te espera no 💬');
+ ST.setJ('coach_perfil',perfil);
+ anunciaRascunho(perfil);
+ toast('rascunho pronto! confirma (ou ajusta) no 💬 🥊');
  ver('v-chat');
 }
 
@@ -713,7 +738,17 @@ function segsDe(t){
 }
 function cardDeBloco(g){
  const cercado='```'+g.tipo+'\n'+g.d+'\n```';
- if(g.tipo==='plano')return '<div class="card" style="margin-bottom:0"><h3>📋 plano conversado</h3><p class="sub" style="margin:0 0 10px">o coach resumiu teu contexto — o app monta a semana com o método da casa. Quer mudar algo antes? Pede no papo.</p><button class="btn p" data-ap="plano" data-cod="'+encodeURIComponent(cercado)+'">✅ usar este plano</button></div>';
+ if(g.tipo==='plano'){
+  const r=CZ.perfilDoBloco(cercado,ST.getJ('coach_perfil'));
+  let sum='',sub;
+  if(r){
+   const tr=r.plano.dias.filter(d=>d.foco==='A'||d.foco==='B'||d.foco==='cardio');
+   const lv=r.plano.dias.filter(d=>d.foco==='livre').length,dc=(r.plano.dias.find(d=>d.foco==='descanso')||{}).dn;
+   sum='<table class="pl" style="margin:0 0 8px">'+tr.map(d=>'<tr><td><b>'+d.dn+'</b></td><td>'+CZ.FOCO_N[d.foco]+'</td></tr>').join('')+'</table>';
+   sub=tr.length+' treino'+(tr.length>1?'s':'')+' na semana'+(lv?' · '+lv+' livre'+(lv>1?'s':''):'')+(dc?' · '+dc+' descanso':'');
+  }else sub='não consegui ler esse rascunho — pede pro coach mandar de novo 🙃';
+  return '<div class="card" style="margin-bottom:0"><h3>📋 rascunho do teu plano</h3>'+sum+'<p class="sub" style="margin:0 0 10px">'+sub+'. Quer assim ou quer mudar? Pede no papo ou ajusta os dias no ✏️ — só entra no teu 🗺️ quando você confirma.</p><div class="row" style="margin:0"><button class="btn g" data-ed="1" data-cod="'+encodeURIComponent(cercado)+'">✏️ editar dias</button><button class="btn p" data-ap="plano" data-cod="'+encodeURIComponent(cercado)+'">✅ confirmar plano</button></div></div>';
+ }
  return '<div class="card" style="margin-bottom:0"><h3>⏱️ timers do coach</h3><p class="sub" style="margin:0 0 10px">vão pro teu relógio — cada um começa com 5s de preparação</p><button class="btn p" data-ap="timers" data-cod="'+encodeURIComponent(cercado)+'">⏱️ adicionar ao relógio</button></div>';
 }
 function pintarChat(){
@@ -722,7 +757,7 @@ function pintarChat(){
  lg.innerHTML=hist.slice(-60).map((x)=>{
   if(x.r==='eu')return '<div class="msg eu">'+esc(x.t)+' <button class="pk" data-t="'+encodeURIComponent(x.t)+'" title="guardar isso sobre você">📌</button></div>';
   const segs=segsDe(x.t);
-  return segs.map(g=>g.tipo==='txt'?('<div class="msg ia">'+esc(g.d)+'</div>'):cardDeBloco(g)).join('');
+  return segs.map(g=>g.tipo==='txt'?('<div class="msg ia">'+esc(g.d)+'</div>'):(g.tipo==='plano'&&x.apl?'<div class="card" style="margin-bottom:0;border-color:var(--ok)"><h3>✅ plano confirmado</h3><p class="sub" style="margin:0">tá no teu 🗺️ — se o treino mudar, pede no papo que a gente refaz o ciclo.</p></div>':cardDeBloco(g))).join('');
  }).join('');
  lg.querySelectorAll('.pk').forEach(b=>b.onclick=()=>{
   const t=decodeURIComponent(b.dataset.t),mem=ST.getJ('coach_mem')||[];
@@ -731,6 +766,7 @@ function pintarChat(){
   toast('guardado! o coach lembra disso 💭');b.textContent='✓';b.classList.add('ok');
  });
  lg.querySelectorAll('[data-ap]').forEach(b=>b.onclick=()=>{b.dataset.ap==='plano'?aplicarPlanoChat(b.dataset.cod):addTimersChat(b.dataset.cod)});
+ lg.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>editarDiasNoCard(b.dataset.cod,b.closest('.card')));
  lg.scrollTop=lg.scrollHeight;
 }
 async function enviar(){
@@ -817,15 +853,59 @@ function quizFinaliza(){
  if(QZF)return;QZF=true;
  const r=W.resp;
  const perfil={v:2,objetivo:(r.objetivo||[]).join('|'),local:r.local,exp:r.exp,dias:r.dias,tempo:r.tempo,limit:(r.limit&&r.limit.length?r.limit.join('|'):'nenhum'),rotina:(r.rotina||'').trim(),nomes:{apelido:r.nomes.apelido.trim(),coach:r.nomes.coach.trim()||'Coach'},criado:CZ.hojeISO(),cicloIni:CZ.hojeISO(),tier:r.exp==='zero'?'zero':(r.exp==='meses'?'meses':'pouco')};
- const plano=CZ.criarPlano(perfil);
- ST.setJ('coach_perfil',perfil);ST.setJ('coach_plano',plano);ST.setJ('coach_log',{});
+ ST.setJ('coach_perfil',perfil);
  ST.del('coach_quiz');
- anunciaPlanoNoChat(plano,true);
+ anunciaRascunho(perfil);
  const qz=$('#chatquiz');if(qz){qz.hidden=true;qz.innerHTML=''}
+ toast('rascunho pronto! confirma (ou ajusta) aí 👇');
  fire();
 }
 
 /* ── chat manda: plano e timers viram coisas do app ── */
+/* ── rascunho: a IA propõe, ele edita ou confirma; mudou? novo rascunho, mesmo ciclo ── */
+function codDoPerfil(p){return '```plano\n'+JSON.stringify({objetivo:p.objetivo,local:p.local,exp:p.exp,dias:p.dias,tempo:p.tempo,limit:p.limit||'nenhum'})+'\n```'}
+function anunciaRascunho(p){
+ pintaCadeados();
+ const hist=ST.getJ('coach_chat')||[];
+ const ap=(p.nomes&&p.nomes.apelido)||'champ';
+ hist.push({r:'ia',t:'Fechado, '+ap+'! 🥊 Com tuas respostas montei um RASCUNHO da tua semana — tá aqui embaixo 👇 Quer assim ou quer mudar? Pede no papo (tipo "treino terça e quinta", "tira um dia") que eu mostro de novo ajustado — ou troca os dias na mão no ✏️. Gostou? Confirma aí que entra no teu 🗺️.'});
+ hist.push({r:'ia',t:codDoPerfil(p)});
+ ST.setJ('coach_chat',hist);
+ pintarChat();
+}
+function codComSemana(cod,semana){
+ let raw=null;try{raw=JSON.parse(CZ.blocoDe(cod,'plano'))}catch(e){}
+ if(!raw)return null;
+ raw.semana=semana;
+ return '```plano\n'+JSON.stringify(raw)+'\n```';
+}
+function editarDiasNoCard(codEnc,card){
+ const cod=decodeURIComponent(codEnc);
+ const r=CZ.perfilDoBloco(cod,ST.getJ('coach_perfil'));
+ if(!r)return toast('esse rascunho tá estranho — pede pro coach mandar de novo 🙃');
+ const treinos=r.plano.dias.filter(d=>d.foco==='A'||d.foco==='B'||d.foco==='cardio');
+ const atual={};treinos.forEach(d=>atual[d.foco]=CZ.DIAS.indexOf(d.dn));
+ card.innerHTML='<h3>✏️ dias de treino</h3>'+treinos.map(d=>'<div class="kv" style="align-items:center"><span>'+CZ.FOCO_N[d.foco]+'</span><select data-fc="'+d.foco+'" style="min-height:0;padding:6px 8px">'+CZ.DIAS.map((dn,i)=>'<option value="'+i+'"'+(i===atual[d.foco]?' selected':'')+'>'+dn+'</option>').join('')+'</select></div>').join('')+
+ '<p class="sub" style="margin:8px 0 10px">cada treino num dia diferente — pra mudar exercícios ou carga, pede no papo.</p><div class="row" style="margin:0"><button class="btn p" data-sv="1">✔ salvar dias</button><button class="btn d" data-cc="1">✕ cancelar</button></div>';
+ card.querySelector('[data-cc]').onclick=()=>pintarChat();
+ card.querySelector('[data-sv]').onclick=()=>{
+  const sels=Array.prototype.slice.call(card.querySelectorAll('select'));
+  const vals=sels.map(x=>+x.value);
+  if(new Set(vals).size!==vals.length)return toast('escolhe um dia diferente pra cada treino 😄');
+  const novo=codComSemana(cod,sels.map(x=>CZ.DIAS[+x.value]));
+  if(!novo)return toast('esse rascunho tá estranho — pede pro coach mandar de novo 🙃');
+  const hist=ST.getJ('coach_chat')||[];
+  for(let i=hist.length-1;i>=0;i--){if(hist[i].t&&hist[i].t.indexOf(cod)>=0){hist[i].t=hist[i].t.split(cod).join(novo);break}}
+  ST.setJ('coach_chat',hist);
+  pintarChat();
+  toast('dias trocados no rascunho — bom agora? confirma aí 👇');
+ };
+}
+function marcaAplicadoNoChat(cod){
+ const hist=ST.getJ('coach_chat')||[];
+ for(let i=hist.length-1;i>=0;i--){if(hist[i].t&&hist[i].t.indexOf(cod)>=0){hist[i].apl=true;break}}
+ ST.setJ('coach_chat',hist);
+}
 function anunciaPlanoNoChat(pl,primeiro){
  pintaCadeados();
  const hist=ST.getJ('coach_chat')||[];
@@ -846,9 +926,10 @@ function aplicarPlanoChat(cod){
  if(!primeiro){p.versao=(antigo.versao||1)+1;p.nota='plano remontado na conversa 💬'}
  ST.setJ('coach_perfil',r.perfil);ST.setJ('coach_plano',p);
  if(primeiro)ST.setJ('coach_log',{});
+ marcaAplicadoNoChat(decodeURIComponent(cod));
  anunciaPlanoNoChat(p,primeiro);
- toast(primeiro?'plano montado pelo papo! 🥊 o coach tá te esperando aí':'plano atualizado na conversa! 🗺️');
- ver('v-chat');fire();
+ toast(primeiro?'plano confirmado — tá no 🗺️! o coach deixou um recado no 💬 🥊':'plano atualizado no 🗺️! 💬');
+ ver('v-plano');fire();
 }
 function addTimersChat(cod){
  const ts=CZ.timersDoBloco(decodeURIComponent(cod));

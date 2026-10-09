@@ -32,6 +32,21 @@ ok(rA.perfil.nomes.apelido==='Lô'&&rA.perfil.nomes.coach==='Capitão','nomes ex
 ok(rA.perfil.rotina==='manhã cheia','rotina preservada');
 ok(rA.perfil.tier==='meses','tier por experiência');
 
+secao('CORE: rascunho com dias marcados (semana)');
+const rS=CZ.perfilDoBloco('```plano\n{"objetivo":"forca","local":"quarto","exp":"pouco","dias":"3","tempo":"20","limit":"nenhum","semana":["Ter","Qui","Sáb"]}\n```',null);
+ok(!!rS,'bloco com semana aceito');
+ok(rS.plano.dias[2].foco==='A'&&rS.plano.dias[4].foco==='B'&&rS.plano.dias[6].foco==='cardio','treinos nos dias pedidos (Ter/Qui/Sáb)');
+ok(rS.plano.dias[0].foco==='descanso','Dom livre = descanso');
+ok(rS.plano.dias[1].foco==='livre'&&rS.plano.dias[3].foco==='livre'&&rS.plano.dias[5].foco==='livre','resto vira livre');
+ok(rS.plano.dias.length===7,'semana continua com 7 dias');
+ok(CZ.validaSemana(['Seg','Seg','Qua'],3)===null,'dia repetido rejeita');
+ok(CZ.validaSemana(['Seg'],3)===null,'semana curta demais rejeita');
+ok(CZ.validaSemana(['Seg','Marte','Qua'],3)===null,'dia desconhecido rejeita');
+const rF=CZ.perfilDoBloco('```plano\n{"objetivo":"forca","local":"quarto","exp":"pouco","dias":"3","tempo":"20","limit":"nenhum","semana":["Seg"]}\n```',null);
+ok(!!rF&&rF.plano.dias[1].foco==='A'&&rF.plano.dias[3].foco==='B','semana inválida → padrão da casa (Seg/Qua/Sex)');
+const p6=CZ.planoComSemana({objetivo:'forca',local:'academia',exp:'meses',dias:'6',tempo:'40',limit:'nenhum',tier:'meses'},['Dom','Seg','Ter','Qua','Qui','Sex']);
+ok(p6.dias[6].foco==='descanso','6x com Dom treinando: descanso escorrega pro Sáb');
+
 secao('CORE: timers');
 ok(CZ.comSeg(60)===65,'comSeg: 60s → 65s (+5 preparação)');
 ok(CZ.comSeg(1)===6,'comSeg: mínimo 1s → 6s');
@@ -127,23 +142,46 @@ for(let rodada=0;rodada<12;rodada++){
   if($('#v-chat').hidden===false)break;
 }
 await tick(200);
+const dsemHoje=CZ.DIAS[new Date().getDay()];
 ok($('#v-chat').hidden===false,'preencheu tudo → abre DIRETO NO CHAT');
-const pj=JSON.parse(w.localStorage.getItem('coach_plano'));
-ok(!!pj,'plano criado pelas respostas');
+ok(!w.localStorage.getItem('coach_plano'),'NADA salvo ainda: plano só entra depois do CONFIRMAR');
 const pfj=JSON.parse(w.localStorage.getItem('coach_perfil'));
 ok(pfj.nomes.apelido==='Teste'&&pfj.nomes.coach==='Capitão','nomes das respostas no perfil');
 ok(pfj.local==='quarto'&&pfj.dias==='3'&&pfj.rotina==='manhã cheia, tarde livre','respostas no perfil (1ª opção de cada tela)');
+ok(['.45','0.45'].indexOf($('#nav button[data-v="v-hoje"]').style.opacity)>=0,'cadeado no nav enquanto o rascunho não confirma');
+ok($('#chatlog').textContent.indexOf('RASCUNHO')>=0,'coach apresenta o RASCUNHO da semana');
+ok($('#chatlog').textContent.toLowerCase().indexOf('quer assim ou quer mudar')>=0,'coach PERGUNTA: quer assim ou quer mudar?');
+ok($$('#chatlog [data-ap="plano"]').length===1,'card de rascunho com ✅ confirmar');
+ok($('#chatlog [data-ed]')!==null,'card de rascunho com ✏️ editar dias');
+const cardT=$('#chatlog .card').textContent;
+ok(cardT.indexOf('rascunho do teu plano')>=0,'card identifica o rascunho');
+ok(cardT.indexOf('Circuito A')>=0&&cardT.indexOf('Cardio')>=0,'rascunho MOSTRA a semana (Circuito A, Cardio…)');
+ok(cardT.indexOf('Seg')>=0,'dias da semana visíveis no rascunho');
+
+secao('DOM: ✏️ EDITAR os dias do rascunho na mão');
+$('#chatlog [data-ed]').click();await tick(120);
+const sels0=$$('#chatlog select');
+ok(sels0.length===3,'editor abre: 1 seletor por treino (3)');
+sels0[0].value='2';sels0[1].value='4';sels0[2].value='6';
+$('#chatlog [data-sv]').click();await tick(150);
+ok(JSON.parse(w.localStorage.getItem('coach_chat')).some(m=>(m.t||'').indexOf('"semana":["Ter","Qui","Sáb"')>=0),'dias editados entram no bloco (Ter/Qui/Sáb)');
+ok($$('#chatlog select').length===0,'editor fecha depois de salvar');
+ok($('#chatlog .card').textContent.indexOf('Ter')>=0,'card re-renderiza com os dias novos');
+
+secao('DOM: ✅ CONFIRMAR → plano vai pra aba 🗺️');
+$('#chatlog [data-ap="plano"]').click();await tick(150);
+const pj=JSON.parse(w.localStorage.getItem('coach_plano'));
+ok(!!pj,'confirmou → plano salvo');
+ok(pj.dias[2].foco==='A'&&pj.dias[4].foco==='B'&&pj.dias[6].foco==='cardio','plano nos dias EDITADOS (Ter/Qui/Sáb)');
+ok(pj.dias[0].foco==='descanso','Dom livre vira descanso');
+ok($('#v-plano').hidden===false,'confirmar MANDA pra aba 🗺️ (onde o plano vai ficar)');
+ok($('#nav button[data-v="v-hoje"]').style.opacity==='','LIBERADO: cadeado sai depois do confirm');
 const bubs=$$('#chatlog .msg.ia');
-ok(bubs.length===2,'duas falas do coach (anúncio + calibragem)');
-ok(bubs[0].textContent.indexOf('Plano fechado, Teste!')>=0,'anúncio personalizado');
-ok(bubs[0].textContent.indexOf('destravaram')>=0,'avisa que liberou geral');
-ok(bubs[1].textContent.indexOf('como tá teu sono')>=0,'coach PERGUNTA MAIS no chat');
-const bubS=bubs[0].textContent;
-ok(bubS.indexOf('Olha tua semana:')>=0,'anúncio MOSTRA o plano na conversa');
-ok(bubS.indexOf('Descanso')>=0&&bubS.indexOf('Circuito A')>=0,'semana resumida com os focos (Descanso, Circuito A…)');
-ok(bubS.indexOf('destravaram')>=0,'e avisa que liberou geral');
-const dsemHoje=CZ.DIAS[new Date().getDay()];
-ok(bubS.indexOf(dsemHoje)>=0,'o dia real de hoje aparece na semana ('+dsemHoje+')');
+ok(bubs.some(x=>x.textContent.indexOf('Plano fechado, Teste!')>=0),'anúncio personalizado no confirm');
+ok(bubs.some(x=>x.textContent.indexOf('destravaram')>=0),'avisa que liberou geral');
+ok(bubs.some(x=>x.textContent.indexOf('como tá teu sono')>=0),'coach PERGUNTA MAIS no chat depois do confirm');
+ok($$('#chatlog .card h3').some(h=>h.textContent.indexOf('plano confirmado')>=0),'card antigo vira CONFIRMADO (ciclo fechou)');
+ok($$('#chatlog [data-ap="plano"]').length===0,'sem botão de confirmar sobrando');
 const dna=w.eval('dnaSistema()');
 ok(dna.indexOf('RELÓGIO:')>=0,'DNA tem relógio interno');
 ok(dna.indexOf(CZ.hojeISO())>=0,'relógio com a DATA de hoje ('+CZ.hojeISO()+')');
@@ -208,8 +246,11 @@ for(let rodada=0;rodada<12;rodada++){
   if($('#v-chat').hidden===false)break;
 }
 await tick(200);
+ok(!w.localStorage.getItem('coach_plano'),'2º wizard também começa por RASCUNHO (nada salvo)');
+ok($$('#chatlog [data-ap="plano"]').length===1,'rascunho novo aguardando');
+$('#chatlog [data-ap="plano"]').click();await tick(150);
 const pj1=JSON.parse(w.localStorage.getItem('coach_plano'));
-ok(!!pj1,'segundo wizard criou plano (local='+(pj1&&pj1.local)+')');
+ok(!!pj1,'confirmou o 2º rascunho → plano (local='+(pj1&&pj1.local)+')');
 const lg2=CZ.checkin(pj1,JSON.parse(w.localStorage.getItem('coach_log')||'{}'),CZ.hojeISO(),0,true);
 w.localStorage.setItem('coach_log',JSON.stringify(lg2));
 d.querySelector('#nav button[data-v="v-chat"]').click();await tick(120);
@@ -231,6 +272,7 @@ $('#b-enviar').click();await tick(400);
 const bots4=$$('#chatlog [data-ap="plano"]');
 ok(bots4.length===bots3.length+1,'bloco inválido vira card (o APP barra no clique)');
 bots4[bots4.length-1].click();await tick(150);
+d.querySelector('#nav button[data-v="v-chat"]').click();await tick(120);
 ok($('#v-chat').hidden===false&&JSON.parse(w.localStorage.getItem('coach_plano')).local==='parque','clique seguro: plano legítimo intacto');
 
 secao('DOM: IA cria timers + EDITAR + excluir');
@@ -301,6 +343,14 @@ ok(HTML.includes(':focus-visible{outline:2px solid var(--brand)'), 'foco visíve
 ok(HTML.includes('scrollbar-color:var(--line)') && HTML.includes('::-webkit-scrollbar-thumb'), 'scrollbar temático (FF + WebKit)');
 ok(HTML.includes('::placeholder{color:var(--muted)'), 'placeholders legíveis');
 ok(HTML.includes('<meta name="description"'), 'meta description');
+
+/* rascunho conversado — guardas do ciclo */
+ok(HTML.indexOf('rascunho do teu plano')>=0,'card do rascunho no index');
+ok(HTML.indexOf('✏️ editar dias')>=0&&HTML.indexOf('✅ confirmar plano')>=0,'botões ✏️ editar + ✅ confirmar');
+ok(HTML.indexOf('RASCUNHO (IMPORTANTE)')>=0,'DNA ensina o ciclo: proposta → mudança → confirmação');
+ok(HTML.indexOf('"semana"')>=0,'DNA documenta a semana marcada no bloco');
+ok(HTML.indexOf('plano confirmado')>=0,'card de confirmado pós-ciclo');
+ok(HTML.indexOf('Ver meu rascunho')>=0,'wizard termina no rascunho (não no plano pronto)');
 
 console.log('\n══════════════════════════');
 console.log('RESULTADO: '+P+' ✓ / '+F+' ✗'+(F?(' → '+FALHAS.join(' | ')):' — SUÍTE INTEIRA PASSOU 🥊'));
